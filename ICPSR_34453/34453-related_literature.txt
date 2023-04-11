@@ -1,0 +1,43 @@
+Bibliography
+American Time Use Survey (ATUS), 2011
+
+This bibliography includes published and unpublished works that are related 
+to ICPSR study 34453. It includes works that are based on primary
+or secondary analysis of the data, or which describe or critique those
+data or the collection methodology. 
+
+If you publish a work or know of other works that are based on these data,
+please send the complete citation and name of the ICPSR study used to:
+icpsr-biblio-notify@umich.edu 
+
+
+1. Adelstein, Shirley; Peters, H. Elizabeth, "Parents' Access to Work-
+Family Supports." Research Report. Washington, DC: Urban Institute, Oct
+2019.
+Full text PDF: https://www.urban.org/sites/default/files/publication/101144/parents_access_to_work-family_supports_1.pdf
+
+2. Doran, Elizabeth L.; Bartel, Ann; Waldfogel, Jane, "Gender in the labor
+market: The role of equal opportunity and family-friendly policies." RSF:
+The Russell Sage Foundation Journal of the Social Sciences. 2019, 5, (5),
+168 - 197. DOI: 10.7758/rsf.2019.5.5.09
+Full text PDF: https://www.urban.org/sites/default/files/publication/101144/parents_access_to_work-family_supports_1.pdf
+
+3. Hwang, Jisoo, "Housewife, 'Gold Miss,' and Equal: The Evolution of
+Educated Women's Role in Asia and the U.S.." Preprint. SSRN, Sep 2015..
+DOI: 10.2139/ssrn.2371979
+Abstract: https://ssrn.com/abstract=2371979
+
+4. Kim, Soohyun, "Access to employer-provided paid leave and eldercare
+provision for older workers." Community, Work and Family. In Press 2021,.
+DOI: 10.1080/13668803.2021.1885346
+Abstract: https://ssrn.com/abstract=2371979
+
+5. Kolpashnikova, Kamila, "American househusbands: New time use evidence of
+gender display, 2003-2016." Social Indicators Research. Nov 2017, 1 - 19.
+DOI: 10.1007/s11205-017-1813-z
+Abstract: https://ssrn.com/abstract=2371979
+
+6. Pakaluk, Catherine R.; Price, Joseph, "Are mothers and fathers
+interchangeable caregivers?." Marriage and Family Review. 2020, 1 - 10.
+DOI: 10.1080/01494929.2020.1778318
+Abstract: https://ssrn.com/abstract=2371979

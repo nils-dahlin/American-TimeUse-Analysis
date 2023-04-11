@@ -1,0 +1,335 @@
+File Manifest for ICPSR 34453
+
+United States Department of Labor. Bureau of Labor Statistics. American
+Time Use Survey (ATUS), 2011. ICPSR34453-v1. Ann Arbor, MI: Inter-
+university Consortium for Political and Social Research [distributor],
+2014-10-22. http://doi.org/10.3886/ICPSR34453.v1
+
+
+Study-level Documentation
+
+    Filename                            Record  Record    Var.    Date        MD5
+                                        Length  Count     Count   Updated     Checksum
+
+    34453-descriptioncitation.pdf       -       -         -       2014-10-22  -
+
+    34453-related_literature.txt        -       -         -       daily       -
+
+    34453-manifest.txt                  -       -         -       daily       -
+
+    34453-Codebook.pdf                  -       -         -       2014-10-22  d4411b441f5e53922af44fd8187a2b3a
+
+    34453-Questionnaire.pdf             -       -         -       2014-10-22  7eeb340cebb7e5ff8b5a63c3ce1c76d5
+
+
+DS0001 Activity File
+
+    Filename                            Record  Record    Var.    Date        MD5
+                                        Length  Count     Count   Updated     Checksum
+
+    34453-0001-Data.dta                 -       234,358   29      2014-10-22  207c50b7c9549bb24733873d33aa0f60
+
+    34453-0001-Data.rda                 -       234,358   29      2014-10-22  9b0da519179024f40e3b52f5935c0580
+
+    34453-0001-Data.sav                 -       234,358   29      2014-10-22  f5118b309f786a0695d6c0c4033d66b5
+
+    34453-0001-Data.stc                 -       234,358   29      2014-10-22  e695de623c8aa028a18552e516a755e3
+
+    34453-0001-Data.tsv                 -       234,358   29      2014-10-22  050283f0bdb7830d5d4f45fc343deb49
+
+    34453-0001-Data.txt                 106     234,358   29      2014-10-22  a8891bcb1f65acca864dc0ff31431c42
+
+    34453-0001-Setup.dct                -       -         -       2014-10-22  b254b61f3cbaceb45d6b8c7040e7047b
+
+    34453-0001-Setup.do                 -       -         -       2014-10-22  a5c462dd06577df84bbe723b3546509c
+
+    34453-0001-Setup.sas                -       -         -       2014-10-22  42941a1ccecd0a863006310329594aff
+
+    34453-0001-Setup.sps                -       -         -       2014-10-22  ff0ed8e4b67139554472003e69221646
+
+
+DS0002 Call History File
+
+    Filename                            Record  Record    Var.    Date        MD5
+                                        Length  Count     Count   Updated     Checksum
+
+    34453-0002-Data.dta                 -       298,897   6       2014-10-22  9db831d5bcab20a9bf2066891361d356
+
+    34453-0002-Data.rda                 -       298,897   6       2014-10-22  96ea82cbd92d75c55e8b484ee75e1fa2
+
+    34453-0002-Data.sav                 -       298,897   6       2014-10-22  1d05c60af014a00d87bc95411dc9a4da
+
+    34453-0002-Data.stc                 -       298,897   6       2014-10-22  51a037d90f1f7aea4f0fdbd381067a14
+
+    34453-0002-Data.tsv                 -       298,897   6       2014-10-22  5b1cbd476a3315a92634ae20c5e5e40d
+
+    34453-0002-Data.txt                 37      298,897   6       2014-10-22  987f8d3250ecf2de3fd2ec5fb4fcc12a
+
+    34453-0002-Setup.dct                -       -         -       2014-10-22  f6a392be7d9f8735100780304cae0d98
+
+    34453-0002-Setup.do                 -       -         -       2014-10-22  4dc935417877a3e75eca3be13364a110
+
+    34453-0002-Setup.sas                -       -         -       2014-10-22  afc513256705823d55218311262e8ff2
+
+    34453-0002-Setup.sps                -       -         -       2014-10-22  146bcbaa978ceb4d444c4c3a6cbe907a
+
+
+DS0003 Case History File
+
+    Filename                            Record  Record    Var.    Date        MD5
+                                        Length  Count     Count   Updated     Checksum
+
+    34453-0003-Data.dta                 -       24,687    18      2014-10-22  17473d7cce515abf31401f35ba935652
+
+    34453-0003-Data.rda                 -       24,687    18      2014-10-22  c59184fb2627fc2c141a6569ec0a3d0a
+
+    34453-0003-Data.sav                 -       24,687    18      2014-10-22  8e1478c3fbd348446b136d3e5c2a7bf4
+
+    34453-0003-Data.stc                 -       24,687    18      2014-10-22  230ec3c0582cfa825a8b91dce6edb387
+
+    34453-0003-Data.tsv                 -       24,687    18      2014-10-22  8ba30a2558754f7e31631b9eb1a0262b
+
+    34453-0003-Data.txt                 72      24,687    18      2014-10-22  287fc65ef100739cfcc6bc2e3958446a
+
+    34453-0003-Setup.dct                -       -         -       2014-10-22  21554042183bba7a8e8d042f8dc6f783
+
+    34453-0003-Setup.do                 -       -         -       2014-10-22  27b83928801f204735b9cc3983eacb88
+
+    34453-0003-Setup.sas                -       -         -       2014-10-22  e6afc8b3a10728bac69ba142a89ae003
+
+    34453-0003-Setup.sps                -       -         -       2014-10-22  2afdabc6db0c850a7f6637392fc7fa85
+
+
+DS0004 ATUS-CPS File
+
+    Filename                            Record  Record    Var.    Date        MD5
+                                        Length  Count     Count   Updated     Checksum
+
+    34453-0004-Data.dta                 -       68,077    374     2014-10-22  cc1f077d02f898c8d3463b7849e7c836
+
+    34453-0004-Data.rda                 -       68,077    374     2014-10-22  e15918f862026c83da78ba5ba2e1bc22
+
+    34453-0004-Data.sav                 -       68,077    374     2014-10-22  e4150a96e2e76834fabdb6e0621629c3
+
+    34453-0004-Data.stc                 -       68,077    374     2014-10-22  353e220d490694ab258991164b22321b
+
+    34453-0004-Data.tsv                 -       68,077    374     2014-10-22  7cbe797c45fec1146c6ac7def707eee2
+
+    34453-0004-Data.txt                 837     68,077    374     2014-10-22  168f47e8a6cad39c17538aa4a5ba7fdb
+
+    34453-0004-Setup.dct                -       -         -       2014-10-22  73f64b1613643badf44105bf3294573d
+
+    34453-0004-Setup.do                 -       -         -       2014-10-22  cc0dabdd337e115ca9077cb014ab5937
+
+    34453-0004-Setup.sas                -       -         -       2014-10-22  1ea15f7c74e789d8eb7757b75d17a742
+
+    34453-0004-Setup.sps                -       -         -       2014-10-22  d9e20f6ecf5531fc4fefd69e89b6d6d1
+
+
+DS0005 Respondent File
+
+    Filename                            Record  Record    Var.    Date        MD5
+                                        Length  Count     Count   Updated     Checksum
+
+    34453-0005-Data.dta                 -       12,479    175     2014-10-22  caf2215c7d796f8cedd34c55ef4ebb48
+
+    34453-0005-Data.rda                 -       12,479    175     2014-10-22  530f324e84e00f445d7ea9e7d5aed1b8
+
+    34453-0005-Data.sav                 -       12,479    175     2014-10-22  f424b6d9538d38c314f17b97233fc0a0
+
+    34453-0005-Data.stc                 -       12,479    175     2014-10-22  a759968285e8732b34633e3c4d8aebad
+
+    34453-0005-Data.tsv                 -       12,479    175     2014-10-22  0a0573ce85363270b7c01781ffe5485f
+
+    34453-0005-Data.txt                 465     12,479    175     2014-10-22  59423fe886c31c5c5528a2b05ad7f70d
+
+    34453-0005-Setup.dct                -       -         -       2014-10-22  59f0da4d3d807193374a614ceb31b685
+
+    34453-0005-Setup.do                 -       -         -       2014-10-22  12bea34914cc846006ebe097a0d861e1
+
+    34453-0005-Setup.sas                -       -         -       2014-10-22  5f28a4b30c9bebacf6f06838565e1246
+
+    34453-0005-Setup.sps                -       -         -       2014-10-22  6469900dfd587a55ef32d18f93fb61a5
+
+
+DS0006 Roster File
+
+    Filename                            Record  Record    Var.    Date        MD5
+                                        Length  Count     Count   Updated     Checksum
+
+    34453-0006-Data.dta                 -       34,451    8       2014-10-22  e2c15c133fbc33a0dc31c6c8acddf198
+
+    34453-0006-Data.rda                 -       34,451    8       2014-10-22  51d024fe473115e8ddd94e6ddf3362c4
+
+    34453-0006-Data.sav                 -       34,451    8       2014-10-22  7a5568f760b9f4c73a00f2ab17feb7ce
+
+    34453-0006-Data.stc                 -       34,451    8       2014-10-22  3f20716a5b746803296674ab6a29ff87
+
+    34453-0006-Data.tsv                 -       34,451    8       2014-10-22  b0bfb38ed00768dce93732f8b0cf08ee
+
+    34453-0006-Data.txt                 70      34,451    8       2014-10-22  9a65616697dc615a682bbb7501c6ac61
+
+    34453-0006-Setup.dct                -       -         -       2014-10-22  6404842c4003969dca952f7c7f7e92fa
+
+    34453-0006-Setup.do                 -       -         -       2014-10-22  bd3ce7f7c2a00e624af220832e2c495b
+
+    34453-0006-Setup.sas                -       -         -       2014-10-22  7bb4d9c31933a2ba002c9eb2c57e226c
+
+    34453-0006-Setup.sps                -       -         -       2014-10-22  7f9fd86a43c2dee4ff445e904c113c12
+
+
+DS0007 Eldercare Roster File
+
+    Filename                            Record  Record    Var.    Date        MD5
+                                        Length  Count     Count   Updated     Checksum
+
+    34453-0007-Data.dta                 -       3,245     12      2014-10-22  a5f967c06582b52f31009cad5b4ebb2d
+
+    34453-0007-Data.rda                 -       3,245     12      2014-10-22  95d040550117546c6a21e7dd124a0911
+
+    34453-0007-Data.sav                 -       3,245     12      2014-10-22  d6ef6af74ea7a4b34832999490833663
+
+    34453-0007-Data.stc                 -       3,245     12      2014-10-22  72c881ba15b4321ac581aa9cb71c7da6
+
+    34453-0007-Data.tsv                 -       3,245     12      2014-10-22  11a06561dd676e6e1a2e137bf78780d7
+
+    34453-0007-Data.txt                 34      3,245     12      2014-10-22  4280c9264c81a32d50854e15a867aa19
+
+    34453-0007-Setup.dct                -       -         -       2014-10-22  8549a0c1dac2d3154c9ae2bb8e23e7a5
+
+    34453-0007-Setup.do                 -       -         -       2014-10-22  e133b0372873f77da7dfc8d200cc7cfc
+
+    34453-0007-Setup.sas                -       -         -       2014-10-22  bdf0e774ec5a0e22f6ad2de9e45433cd
+
+    34453-0007-Setup.sps                -       -         -       2014-10-22  ced40284b953f6853507228e8d4717c2
+
+
+DS0008 Activity Summary File
+
+    Filename                            Record  Record    Var.    Date        MD5
+                                        Length  Count     Count   Updated     Checksum
+
+    34453-0008-Data.dta                 -       12,479    411     2014-10-22  e1d24824064d4da8d50747e4e9659473
+
+    34453-0008-Data.rda                 -       12,479    411     2014-10-22  1a12ff6724397d66de7b055075bcbfd4
+
+    34453-0008-Data.sav                 -       12,479    411     2014-10-22  d4a29a7aca1332a4f7762c13fec0cf39
+
+    34453-0008-Data.stc                 -       12,479    411     2014-10-22  213be93826dce84d97cddbdc1bce7890
+
+    34453-0008-Data.tsv                 -       12,479    411     2014-10-22  491b89316d9327fb3a9f5f84ae2efe2c
+
+    34453-0008-Data.txt                 1161    12,479    411     2014-10-22  55ffd49b5ab528bc035f884c539b734d
+
+    34453-0008-Setup.dct                -       -         -       2014-10-22  3b23f2942ff0ee9b8b0cbc6216f1bc96
+
+    34453-0008-Setup.do                 -       -         -       2014-10-22  e84e87ab91756b11ee2f63c7021cf35e
+
+    34453-0008-Setup.sas                -       -         -       2014-10-22  519608e41b6d0c8584e19d4648c32d05
+
+    34453-0008-Setup.sps                -       -         -       2014-10-22  3a35acf0a5e4f1a0a63635411c97071f
+
+
+DS0009 Replicate Weight File
+
+    Filename                            Record  Record    Var.    Date        MD5
+                                        Length  Count     Count   Updated     Checksum
+
+    34453-0009-Data.dta                 -       24,687    322     2014-10-22  9e5a1df9fc6dc47a8ef2756d7cf21503
+
+    34453-0009-Data.rda                 -       24,687    322     2014-10-22  052f654d5e0e24f29d376265c8f42e56
+
+    34453-0009-Data.sav                 -       24,687    322     2014-10-22  32df32a07b4f9aba664992c21b2c952e
+
+    34453-0009-Data.stc                 -       24,687    322     2014-10-22  ea95a4752bb8f9c544d4d7c8b68d3aa7
+
+    34453-0009-Data.tsv                 -       24,687    322     2014-10-22  a2e8f9c9d2c6cce2fbe9ee2d4ebe7542
+
+    34453-0009-Data.txt                 4507    24,687    322     2014-10-22  3b471a29b88cde2d63c4e608512db603
+
+    34453-0009-Setup.dct                -       -         -       2014-10-22  a2114d01414f2fc7eb9324dff599dc0a
+
+    34453-0009-Setup.do                 -       -         -       2014-10-22  a0c44376206c1cd8a4b3136a607e1519
+
+    34453-0009-Setup.sas                -       -         -       2014-10-22  da64f203adbdb549f7d7bb2047de35e3
+
+    34453-0009-Setup.sps                -       -         -       2014-10-22  f2034aceb7e9d146cbd5fded7d4ae171
+
+
+DS0010 Who File
+
+    Filename                            Record  Record    Var.    Date        MD5
+                                        Length  Count     Count   Updated     Checksum
+
+    34453-0010-Data.dta                 -       303,563   5       2014-10-22  1958d812ed7a513560d264fa3ddee9c7
+
+    34453-0010-Data.rda                 -       303,563   5       2014-10-22  f685a04ca5871e2b9cf89920ceee200e
+
+    34453-0010-Data.sav                 -       303,563   5       2014-10-22  e3d93cb02d7c2acfe73ecf116903e743
+
+    34453-0010-Data.stc                 -       303,563   5       2014-10-22  6f19a31a1a172036a2c84ff0080739ac
+
+    34453-0010-Data.tsv                 -       303,563   5       2014-10-22  58be5da0fa06b6dce538895f7772c700
+
+    34453-0010-Data.txt                 22      303,563   5       2014-10-22  883225d5b0a8be859726e25311583412
+
+    34453-0010-Setup.dct                -       -         -       2014-10-22  5c585a717e291437f1523306bd00b6bb
+
+    34453-0010-Setup.do                 -       -         -       2014-10-22  786f4dbed183a59b9dc19346c58533f4
+
+    34453-0010-Setup.sas                -       -         -       2014-10-22  306a9135a078592078e8f7c20ab3b42c
+
+    34453-0010-Setup.sps                -       -         -       2014-10-22  dd4046755841d9fcc7dcb570d1fb41e1
+
+
+DS0011 ATUS Leave Module Respondent File
+
+    Filename                            Record  Record    Var.    Date        MD5
+                                        Length  Count     Count   Updated     Checksum
+
+    34453-0011-Data.dta                 -       6,673     167     2014-10-22  70df90ca79af54139d66dfff5bb052fc
+
+    34453-0011-Data.rda                 -       6,673     167     2014-10-22  def342f73b36be6bca1a1539c9687d29
+
+    34453-0011-Data.sav                 -       6,673     167     2014-10-22  f034a43d523551b153ab64aa6b634070
+
+    34453-0011-Data.stc                 -       6,673     167     2014-10-22  ce1477b87cf1447255967859345fcb21
+
+    34453-0011-Data.tsv                 -       6,673     167     2014-10-22  96bec872a50e52b7b80f6def34715367
+
+    34453-0011-Data.txt                 346     6,673     167     2014-10-22  bb008871d06a53103cf1b2ac91db6ae6
+
+    34453-0011-Setup.dct                -       -         -       2014-10-22  786b7f6d16883646151149f50aacb3d4
+
+    34453-0011-Setup.do                 -       -         -       2014-10-22  62c79ec53dacb490cbdde7b5295764d7
+
+    34453-0011-Setup.sas                -       -         -       2014-10-22  0c007a8ffcdcbf5707dc49b55a750b6b
+
+    34453-0011-Setup.sps                -       -         -       2014-10-22  0d9580db129a680e68dd6407c69d8228
+
+
+DS0012 ATUS Leave Module Replicate Weights File
+
+    Filename                            Record  Record    Var.    Date        MD5
+                                        Length  Count     Count   Updated     Checksum
+
+    34453-0012-Data.dta                 -       6,673     161     2014-10-22  cddc62c89786ccf0351680ad2073e746
+
+    34453-0012-Data.rda                 -       6,673     161     2014-10-22  8a94ee1d8219afd7e5d53a13e7756f83
+
+    34453-0012-Data.sav                 -       6,673     161     2014-10-22  cbfe385884b323e7c278110a0304022c
+
+    34453-0012-Data.stc                 -       6,673     161     2014-10-22  80a834af58ef71c6e793d8aa206dae74
+
+    34453-0012-Data.tsv                 -       6,673     161     2014-10-22  c77ece15da9c8f15008475470f4ce8fd
+
+    34453-0012-Data.txt                 2414    6,673     161     2014-10-22  3b38510224e85b178bb71d627d3b59a1
+
+    34453-0012-Setup.dct                -       -         -       2014-10-22  7087cd3a80cfe209efa13fd4c6ec680b
+
+    34453-0012-Setup.do                 -       -         -       2014-10-22  cfde91941e8576131fb0c55f7bcb1786
+
+    34453-0012-Setup.sas                -       -         -       2014-10-22  161d5b01712a98f3ee8f6899749176da
+
+    34453-0012-Setup.sps                -       -         -       2014-10-22  5382ace2bb13fe03e72291c75473a292
+

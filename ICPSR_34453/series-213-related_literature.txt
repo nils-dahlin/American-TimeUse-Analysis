@@ -1,0 +1,31 @@
+Bibliography
+American Time Use Survey (ATUS) Series
+
+This bibliography includes published and unpublished works that are
+related to ICPSR series 213. It includes works that are based on
+primary or secondary analysis of the data, or which describe or critique
+those data or the collection methodology. This list represents all items
+known to ICPSR as of 2019-05-21.
+
+If you publish a work or know of other works that are based on these data,
+please send the complete citation and name of the ICPSR series used to:
+icpsr-biblio-notify@umich.edu 
+
+
+1. Flood, Sarah M.; Moen, Phyllis, "Healthy time use in the encore years:
+Do work,
+resources, relations, and gender matter?." Journal of Health and Social
+Behavior. Mar 2015, 56, (1), 74 - 97. DOI: 10.1177/0022146514568669
+
+2. Kendig, Sarah; Martin, Steven, "Education, Childlessness, and Women's
+Time with Children: Estimates from the American Time Use Survey." Presented
+at the 2009 annual meeting of the American Sociological Association, San
+Francisco, Aug 2009.
+
+3. Kimmel, Jean, How Do We Spend Our Time? Evidence from the American Time
+Use Survey. Kalamazoo, MI: W.E. Upjohn Institute for Employment Research,
+2008.
+
+4. Pepin, Joanna R.; Sayer, Liana C.; Casper, Lynne M., "Marital status and
+mothers' time use: Childcare, housework, leisure, and sleep." Demography.
+2018, 55, (1), 107 - 133. DOI: 10.1007/s13524-018-0647-x
