@@ -1,0 +1,37 @@
+---
+title: "Stat 288 Time Use Analysis"
+author: "Nils Dahlin, Gian Cercena"
+date: "4/17/2023"
+output: html_document
+---
+
+# Examining the Time Use of Americans and Predicting Personal Features 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# libraries needed
+library(dplyr)
+library(rpart)
+library(tree)
+
+# activity_dat contains the data/features regarding the activities respondents did throughout the week as well as related variables
+activity_dat = da34453.0001
+
+# summary_dat contains the data/features regarding the individual repsondents, contains features like: part/full time status, income, job type, family stats, etc.
+summary_dat = da34453.0008
+```
+
+### Pulling Features We Need/Looking at the Raw Data
+```{r reducing dataset}
+activity_dat <- activity_dat %>% 
+  select(TUCASEID,TUACT_N,TEWHERE,TUACTDUR,TUT1CODE,TUT2CODE,TUT3CODE,TRCODE)
+
+summary_dat <- summary_dat %>% 
+  select(TUCASEID,TEAGE,TESEX,PEEDUCA,GTMETSTA,TELFS,TRDPFTPT,TRERNWA,T010101:T189999)
+
+head(activity_dat)
+head(summary_dat)
+```
+
+
