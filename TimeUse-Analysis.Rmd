@@ -22,7 +22,7 @@ activity_dat = da34453.0001
 summary_dat = da34453.0008
 ```
 
-### Pulling Features We Need/Looking at the Raw Data
+#### Pulling Features We Need/Looking at the Raw Data
 ```{r reducing dataset}
 activity_dat <- activity_dat %>% 
   select(TUCASEID,TUACT_N,TEWHERE,TUACTDUR,TUT1CODE,TUT2CODE,TUT3CODE,TRCODE)
@@ -31,6 +31,33 @@ summary_dat <- summary_dat %>%
   select(TUCASEID,TEAGE,TESEX,PEEDUCA,GTMETSTA,TELFS,TRDPFTPT,TRERNWA,T010101:T189999)
 
 head(activity_dat)
+head(summary_dat)
+```
+
+#### Renaming Certain Features/Columns
+```{r renaming features}
+# in activity_dat the three TUTCODE's are the codes for the primary, secondary, and tertiary activity codes which combined make the 6 digit activity code for each specific activity measured (see here https://www.bls.gov/tus/lexicons/lexiconnoex0321.pdf)
+activity_dat <- activity_dat %>% 
+        rename("id" = "TUCASEID",
+               "activity_num" = "TUACT_N",
+               "location" = "TEWHERE",
+               "duration" = "TUACTDUR",
+               "code1" = "TUT1CODE",
+               "code2" = "TUT2CODE",
+               "code3" = "TUT3CODE",
+               "activity_code" = "TRCODE")
+head(activity_dat)
+
+# renaming non-activity code features
+summary_dat <- summary_dat %>% 
+        rename("id" = "TUCASEID",
+               "age" = "TEAGE",
+               "sex" = "TESEX",
+               "education" = "PEEDUCA",
+               "metro_area" = "GTMETSTA",
+               "employment_status" = "TELFS",
+               "employment_level" = "TRDPFTPT",
+               "weekly_income" = "TRERNWA")
 head(summary_dat)
 ```
 
