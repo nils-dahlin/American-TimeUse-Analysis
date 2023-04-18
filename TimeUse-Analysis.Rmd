@@ -16,10 +16,14 @@ library(dplyr)
 library(rpart)
 library(tree)
 
-# activity_dat contains the data/features regarding the activities respondents did throughout the week as well as related variables
+# activity_dat contains the data/features regarding the
+# activities respondents did throughout the week as well
+# as related variables
 load(file = "34453-0001-Data.rda")
 activity_dat <- da34453.0001
-# summary_dat contains the data/features regarding the individual repsondents, contains features like: part/full time status, income, job type, family stats, etc.
+# summary_dat contains the data/features regarding the
+# individual repsondents, contains features like:
+# part/full time status, income, job type, family stats, etc.
 load(file = "34453-0008-Data.rda")
 summary_dat <- da34453.0008
 ```
@@ -27,10 +31,16 @@ summary_dat <- da34453.0008
 #### Pulling Features We Need/Looking at the Raw Data
 ```{r reducing dataset}
 activity_dat <- activity_dat %>%
-    select(TUCASEID, TUACT_N, TEWHERE, TUACTDUR, TUT1CODE, TUT2CODE, TUT3CODE, TRCODE)
+    select(
+        TUCASEID, TUACT_N, TEWHERE, TUACTDUR,
+        TUT1CODE, TUT2CODE, TUT3CODE, TRCODE
+    )
 
 summary_dat <- summary_dat %>%
-    select(TUCASEID, TEAGE, TESEX, PEEDUCA, GTMETSTA, TELFS, TRDPFTPT, TRERNWA, T010101:T189999)
+    select(
+        TUCASEID, TEAGE, TESEX, PEEDUCA, GTMETSTA,
+        TELFS, TRDPFTPT, TRERNWA, T010101:T189999
+    )
 
 head(activity_dat)
 head(summary_dat)
@@ -38,7 +48,10 @@ head(summary_dat)
 
 #### Renaming Certain Features/Columns
 ```{r renaming features}
-# in activity_dat the three TUTCODE's are the codes for the primary, secondary, and tertiary activity codes which combined make the 6 digit activity code for each specific activity measured (see here https://www.bls.gov/tus/lexicons/lexiconnoex0321.pdf)
+# in activity_dat the three TUTCODE's are the codes for the
+# primary, secondary, and tertiary activity codes which combined
+# make the 6 digit activity code for each specific activity measured
+# see here https://www.bls.gov/tus/lexicons/lexiconnoex0321.pdf)
 activity_dat <- activity_dat %>%
     rename(
         "id" = "TUCASEID",
@@ -147,7 +160,10 @@ rfc_dat <- rfc_dat %>%
 # convert income_bracket to factor
 rfc_dat$income_bracket <- as.factor(rfc_dat$income_bracket)
 # Order the factor levels for income
-rfc_dat$income_bracket <- ordered(rfc_dat$income_bracket, levels = c("very low", "low", "medium", "high", "very high"))
+rfc_dat$income_bracket <- ordered(rfc_dat$income_bracket,
+    levels =
+        c("very low", "low", "medium", "high", "very high")
+)
 # removing columns 2-8
 rfc_dat <- rfc_dat %>%
     select(-c(2:8))
@@ -170,7 +186,7 @@ rfc_dat <- rfc_dat %>%
 
 ```{r}
 # Creating the training and testing data sets
-set.seed(456)
+# set.seed(456)
 train_index <- sample(1:nrow(rfc_dat), size = 0.75 * nrow(rfc_dat))
 rfc_train <- rfc_dat[train_index, ]
 rfc_test <- rfc_dat[-train_index, ]
@@ -187,18 +203,6 @@ rfc_model <- randomForest(income_bracket ~ ., data = rfc_train, ntree = 500)
 rfc_pred <- predict(rfc_model, rfc_test)
 # rfc_pred
 ```
-
-```{r}
-# Calculate MSE
-rfc_mse <- mean((rfc_test$income_bracket - rfc_pred)^2)
-rfc_mse
-rfc_rmse <- sqrt(rfc_mse)
-rfc_rmse
-# Calculate R^2
-rfc_r2 <- 1 - (rfc_mse / var(test$income_bracket))
-rfc_r2
-```
-
 
 ```{r}
 # import confusionMatrix
@@ -224,7 +228,8 @@ rfc_dat_avg
 ```
 
 ```{r}
-# export to csv
+# export to csv to perform row analysis in python
+# since I can't figure it out in R
 write.csv(rfc_dat_avg, "rfc_dat_avg.csv")
 ```
 
