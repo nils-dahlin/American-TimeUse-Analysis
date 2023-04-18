@@ -7,6 +7,7 @@ output: html_document
 
 # Examining the Time Use of Americans and Predicting Personal Features 
 
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
@@ -16,20 +17,20 @@ library(rpart)
 library(tree)
 
 # activity_dat contains the data/features regarding the activities respondents did throughout the week as well as related variables
-load(file='34453-0001-Data.rda')
-activity_dat = da34453.0001
+load(file = "34453-0001-Data.rda")
+activity_dat <- da34453.0001
 # summary_dat contains the data/features regarding the individual repsondents, contains features like: part/full time status, income, job type, family stats, etc.
-load(file='34453-0008-Data.rda')
-summary_dat = da34453.0008
+load(file = "34453-0008-Data.rda")
+summary_dat <- da34453.0008
 ```
 
 #### Pulling Features We Need/Looking at the Raw Data
 ```{r reducing dataset}
-activity_dat <- activity_dat %>% 
-  select(TUCASEID,TUACT_N,TEWHERE,TUACTDUR,TUT1CODE,TUT2CODE,TUT3CODE,TRCODE)
+activity_dat <- activity_dat %>%
+    select(TUCASEID, TUACT_N, TEWHERE, TUACTDUR, TUT1CODE, TUT2CODE, TUT3CODE, TRCODE)
 
-summary_dat <- summary_dat %>% 
-  select(TUCASEID,TEAGE,TESEX,PEEDUCA,GTMETSTA,TELFS,TRDPFTPT,TRERNWA,T010101:T189999)
+summary_dat <- summary_dat %>%
+    select(TUCASEID, TEAGE, TESEX, PEEDUCA, GTMETSTA, TELFS, TRDPFTPT, TRERNWA, T010101:T189999)
 
 head(activity_dat)
 head(summary_dat)
@@ -38,74 +39,45 @@ head(summary_dat)
 #### Renaming Certain Features/Columns
 ```{r renaming features}
 # in activity_dat the three TUTCODE's are the codes for the primary, secondary, and tertiary activity codes which combined make the 6 digit activity code for each specific activity measured (see here https://www.bls.gov/tus/lexicons/lexiconnoex0321.pdf)
-activity_dat <- activity_dat %>% 
-        rename("id" = "TUCASEID",
-               "activity_num" = "TUACT_N",
-               "location" = "TEWHERE",
-               "duration" = "TUACTDUR",
-               "code1" = "TUT1CODE",
-               "code2" = "TUT2CODE",
-               "code3" = "TUT3CODE",
-               "activity_code" = "TRCODE")
+activity_dat <- activity_dat %>%
+    rename(
+        "id" = "TUCASEID",
+        "activity_num" = "TUACT_N",
+        "location" = "TEWHERE",
+        "duration" = "TUACTDUR",
+        "code1" = "TUT1CODE",
+        "code2" = "TUT2CODE",
+        "code3" = "TUT3CODE",
+        "activity_code" = "TRCODE"
+    )
 head(activity_dat)
 
 # renaming non-activity code features
-summary_dat <- summary_dat %>% 
-        rename("id" = "TUCASEID",
-               "age" = "TEAGE",
-               "sex" = "TESEX",
-               "education" = "PEEDUCA",
-               "metro_area" = "GTMETSTA",
-               "employment_status" = "TELFS",
-               "employment_level" = "TRDPFTPT",
-               "weekly_income" = "TRERNWA")
+summary_dat <- summary_dat %>%
+    rename(
+        "id" = "TUCASEID",
+        "age" = "TEAGE",
+        "sex" = "TESEX",
+        "education" = "PEEDUCA",
+        "metro_area" = "GTMETSTA",
+        "employment_status" = "TELFS",
+        "employment_level" = "TRDPFTPT",
+        "weekly_income" = "TRERNWA"
+    )
 head(summary_dat)
 
 # Add two decimal places to weekly_income
-summary_dat$weekly_income <- summary_dat$weekly_income/100
+summary_dat$weekly_income <- summary_dat$weekly_income / 100
 ```
 
 
-## Random Forest Classifier
+## Random Forest
 ### Set up
-```{r random forest summary stats}
-# Remove all NA's and -1 from weekly_income
-rf_dat <- summary_dat %>% 
-  filter(weekly_income != -0.01) %>% 
-  filter(!is.na(weekly_income))
-# Find the 25%, 50%, and 75% percentiles of weekly_income
-brackets <- quantile(rf_dat$weekly_income, probs = c(0.2, 0.4, 0.6, 0.8)) 
-# 400.00, 730.76, 1160.08
-```
-
-
-```{r random forest classifier creating column}
-# Creating income brackets
-# Add income bracket to rf_dat
-
-# rf_dat <- rf_dat %>% 
-#   mutate(income_bracket = case_when(
-#     weekly_income >= 0 & weekly_income < brackets[1] ~ "low",
-#     weekly_income >= brackets[1] & weekly_income < brackets[2] ~ "low-mid",
-#     weekly_income >= brackets[2] & weekly_income < brackets[3] ~ "mid",
-#     weekly_income >= brackets[3] & weekly_income < brackets[4] ~ "mid-high",
-#     weekly_income >= brackets[4] ~ "high"
-#   ))
-# # Moving income_bracket to the front of the data frame
-# rf_dat <- rf_dat %>% 
-#   select(income_bracket, everything())
-```
-
 ```{r}
-# Removing column 2 - 9 from rf_dat
-rf_dat <- rf_dat %>% 
-  select(-c(1:7))
-
-# Creating the training and testing data sets
-set.seed(456)
-train_index <- sample(1:nrow(rf_dat), size = 0.75*nrow(rf_dat))
-train <- rf_dat[train_index, ]
-test <- rf_dat[-train_index, ]
+# Remove all NA's and -1 from weekly_income
+rf_dat <- summary_dat %>%
+    filter(weekly_income != -0.01) %>%
+    filter(!is.na(weekly_income))
 ```
 
 ```{r}
@@ -113,25 +85,136 @@ test <- rf_dat[-train_index, ]
 library(randomForest)
 ```
 
+### Random Forest Regression
+
+```{r}
+# Removing column 2 - 9 from rf_dat
+rfr_dat <- rf_dat %>%
+    select(-c(1:7))
+
+# Creating the training and testing data sets
+set.seed(456)
+train_index <- sample(1:nrow(rfr_dat), size = 0.75 * nrow(rfr_dat))
+rfr_train <- rfr_dat[train_index, ]
+rfr_test <- rfr_dat[-train_index, ]
+```
+
 ```{r}
 # Creating the random forest classifier
-rf_model <- randomForest(weekly_income ~ ., data = train, ntree = 100)
-rf_model
+rfr_model <- randomForest(weekly_income ~ ., data = rfr_train, ntree = 500)
+rfr_model
 ```
 
 ```{r}
 # Predicting the income bracket of the test data set
-rf_pred <- predict(rf_model, test)
-rf_pred
+rfr_pred <- predict(rfr_model, rfr_test)
+# rf_pred
 ```
 
 ```{r}
-# Creating a confusion matrix
-rf_confusion <- table(test$income_bracket, rf_pred)
-rf_confusion
+# Calculate MSE
+rfr_mse <- mean((test$weekly_income - rfr_pred)^2)
+rfr_mse
+rfr_rmse <- sqrt(rfr_mse)
+rfr_rmse
+# Calculate R^2
+rfr_r2 <- 1 - (rfr_mse / var(test$weekly_income))
+rfr_r2
+```
+
+## RF Classifier
+
+```{r random forest classifier creating column}
+# Creating income brackets
+# Dividing weekly_income into 5 brackets
+brackets <- quantile(rf_dat$weekly_income, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1))
+brackets
 ```
 
 ```{r}
-
+# Add income bracket to rf_dat
+rfc_dat <- rf_dat %>%
+    mutate(income_bracket = case_when(
+        weekly_income <= brackets[2] ~ "very low",
+        weekly_income > brackets[2] & weekly_income <= brackets[3] ~ "low",
+        weekly_income > brackets[3] & weekly_income <= brackets[4] ~ "medium",
+        weekly_income > brackets[4] & weekly_income <= brackets[5] ~ "high",
+        weekly_income > brackets[5] ~ "very high"
+    ))
+# Moving income_bracket to the front of the data frame
+rfc_dat <- rfc_dat %>%
+    select(income_bracket, everything())
+# convert income_bracket to factor
+rfc_dat$income_bracket <- as.factor(rfc_dat$income_bracket)
+# Order the factor levels for income
+rfc_dat$income_bracket <- ordered(rfc_dat$income_bracket, levels = c("very low", "low", "medium", "high", "very high"))
+# removing columns 2-8
+rfc_dat <- rfc_dat %>%
+    select(-c(2:8))
 ```
+
+```{r}
+# Print the income bracket types and their factor as well as their counts
+table(rfc_dat$income_bracket)
+# print total number of observations
+nrow(rfc_dat)
+# find the total number of variables
+ncol(rfc_dat) - 1
+```
+
+```{r}
+# Remove weekly_income from rfc_dat
+rfc_dat <- rfc_dat %>%
+    select(-weekly_income)
+```
+
+```{r}
+# Creating the training and testing data sets
+set.seed(456)
+train_index <- sample(1:nrow(rfc_dat), size = 0.75 * nrow(rfc_dat))
+rfc_train <- rfc_dat[train_index, ]
+rfc_test <- rfc_dat[-train_index, ]
+```
+
+```{r}
+# Creating the random forest classifier
+rfc_model <- randomForest(income_bracket ~ ., data = rfc_train, ntree = 500)
+# rfc_model
+```
+
+```{r}
+# Predicting the income bracket of the test data set
+rfc_pred <- predict(rfc_model, rfc_test)
+# rfc_pred
+```
+
+```{r}
+# Calculate MSE
+rfc_mse <- mean((rfc_test$income_bracket - rfc_pred)^2)
+rfc_mse
+rfc_rmse <- sqrt(rfc_mse)
+rfc_rmse
+# Calculate R^2
+rfc_r2 <- 1 - (rfc_mse / var(test$income_bracket))
+rfc_r2
+```
+
+
+```{r}
+# import confusionMatrix
+library(caret)
+```
+
+```{r}
+# Confusion matrix
+confusionMatrix(rfc_pred, rfc_test$income_bracket)
+```
+
+```{r}
+# find most important features and make plot bigger
+varImpPlot(rfc_model, main = "Random Forest Classifier", n.var = 10)
+```
+
+
+
 
