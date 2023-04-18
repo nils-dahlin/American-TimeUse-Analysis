@@ -16,10 +16,10 @@ library(rpart)
 library(tree)
 
 # activity_dat contains the data/features regarding the activities respondents did throughout the week as well as related variables
-activity_dat = da34453.0001
+activity_dat = load(file='34453-0001-Data.rda')
 
 # summary_dat contains the data/features regarding the individual repsondents, contains features like: part/full time status, income, job type, family stats, etc.
-summary_dat = da34453.0008
+summary_dat = load(file='34453-0008-Data.rda')
 ```
 
 #### Pulling Features We Need/Looking at the Raw Data
