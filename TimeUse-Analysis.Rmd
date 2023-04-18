@@ -215,6 +215,18 @@ confusionMatrix(rfc_pred, rfc_test$income_bracket)
 varImpPlot(rfc_model, main = "Random Forest Classifier", n.var = 10)
 ```
 
+```{r}
+# Find the average values of each feature for each income bracket
+rfc_dat_avg <- rfc_dat %>%
+    group_by(income_bracket) %>%
+    summarise_all(mean)
+rfc_dat_avg
+```
 
+```{r}
+# export to csv
+write.csv(rfc_dat_avg, "rfc_dat_avg.csv")
+```
 
-
+```{r}
+```
