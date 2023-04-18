@@ -16,10 +16,11 @@ library(rpart)
 library(tree)
 
 # activity_dat contains the data/features regarding the activities respondents did throughout the week as well as related variables
-activity_dat = load(file='34453-0001-Data.rda')
-
+load(file='34453-0001-Data.rda')
+activity_dat = da34453.0001
 # summary_dat contains the data/features regarding the individual repsondents, contains features like: part/full time status, income, job type, family stats, etc.
-summary_dat = load(file='34453-0008-Data.rda')
+load(file='34453-0008-Data.rda')
+summary_dat = da34453.0008
 ```
 
 #### Pulling Features We Need/Looking at the Raw Data
@@ -59,6 +60,78 @@ summary_dat <- summary_dat %>%
                "employment_level" = "TRDPFTPT",
                "weekly_income" = "TRERNWA")
 head(summary_dat)
+
+# Add two decimal places to weekly_income
+summary_dat$weekly_income <- summary_dat$weekly_income/100
 ```
 
+
+## Random Forest Classifier
+### Set up
+```{r random forest summary stats}
+# Remove all NA's and -1 from weekly_income
+rf_dat <- summary_dat %>% 
+  filter(weekly_income != -0.01) %>% 
+  filter(!is.na(weekly_income))
+# Find the 25%, 50%, and 75% percentiles of weekly_income
+brackets <- quantile(rf_dat$weekly_income, probs = c(0.2, 0.4, 0.6, 0.8)) 
+# 400.00, 730.76, 1160.08
+```
+
+
+```{r random forest classifier creating column}
+# Creating income brackets
+# Add income bracket to rf_dat
+
+# rf_dat <- rf_dat %>% 
+#   mutate(income_bracket = case_when(
+#     weekly_income >= 0 & weekly_income < brackets[1] ~ "low",
+#     weekly_income >= brackets[1] & weekly_income < brackets[2] ~ "low-mid",
+#     weekly_income >= brackets[2] & weekly_income < brackets[3] ~ "mid",
+#     weekly_income >= brackets[3] & weekly_income < brackets[4] ~ "mid-high",
+#     weekly_income >= brackets[4] ~ "high"
+#   ))
+# # Moving income_bracket to the front of the data frame
+# rf_dat <- rf_dat %>% 
+#   select(income_bracket, everything())
+```
+
+```{r}
+# Removing column 2 - 9 from rf_dat
+rf_dat <- rf_dat %>% 
+  select(-c(1:7))
+
+# Creating the training and testing data sets
+set.seed(456)
+train_index <- sample(1:nrow(rf_dat), size = 0.75*nrow(rf_dat))
+train <- rf_dat[train_index, ]
+test <- rf_dat[-train_index, ]
+```
+
+```{r}
+# importing the randomForest library
+library(randomForest)
+```
+
+```{r}
+# Creating the random forest classifier
+rf_model <- randomForest(weekly_income ~ ., data = train, ntree = 100)
+rf_model
+```
+
+```{r}
+# Predicting the income bracket of the test data set
+rf_pred <- predict(rf_model, test)
+rf_pred
+```
+
+```{r}
+# Creating a confusion matrix
+rf_confusion <- table(test$income_bracket, rf_pred)
+rf_confusion
+```
+
+```{r}
+
+```
 
