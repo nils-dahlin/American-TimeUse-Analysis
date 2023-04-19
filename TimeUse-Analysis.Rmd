@@ -101,7 +101,7 @@ library(randomForest)
 ### Random Forest Regression
 
 ```{r}
-# Removing column 2 - 9 from rf_dat
+# Removing column 1 - 7 from rf_dat
 rfr_dat <- rf_dat %>%
     select(-c(1:7))
 
@@ -212,6 +212,10 @@ library(caret)
 ```{r}
 # Confusion matrix
 confusionMatrix(rfc_pred, rfc_test$income_bracket)
+```
+
+```{r}
+rfc_model$confusion
 ```
 
 ```{r}
