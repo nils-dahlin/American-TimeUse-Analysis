@@ -20,23 +20,23 @@ library(tree)
 # activities respondents did throughout the week as well
 # as related variables
 load(file = "34453-0001-Data.rda")
-activity_dat <- da34453.0001
+activity_dat_orig <- da34453.0001
 # summary_dat contains the data/features regarding the
 # individual repsondents, contains features like:
 # part/full time status, income, job type, family stats, etc.
 load(file = "34453-0008-Data.rda")
-summary_dat <- da34453.0008
+summary_dat_orig <- da34453.0008
 ```
 
 #### Pulling Features We Need/Looking at the Raw Data
 ```{r reducing dataset}
-activity_dat <- activity_dat %>%
+activity_dat <- activity_dat_orig %>%
     select(
         TUCASEID, TUACT_N, TEWHERE, TUACTDUR,
         TUT1CODE, TUT2CODE, TUT3CODE, TRCODE
     )
 
-summary_dat <- summary_dat %>%
+summary_dat <- summary_dat_orig %>%
     select(
         TUCASEID, TEAGE, TESEX, PEEDUCA, GTMETSTA,
         TELFS, TRDPFTPT, TRERNWA, T010101:T189999
@@ -199,6 +199,17 @@ rfc_model <- randomForest(income_bracket ~ ., data = rfc_train, ntree = 500)
 ```
 
 ```{r}
+# getting the values from the model
+rfc_model$confusion
+```
+
+```{r}
+plot(rfc_model)
+# you can find out which line is which by matching the error rate at the end
+# with the classification error
+```
+
+```{r}
 # Predicting the income bracket of the test data set
 rfc_pred <- predict(rfc_model, rfc_test)
 # rfc_pred
@@ -237,5 +248,30 @@ rfc_dat_avg
 write.csv(rfc_dat_avg, "rfc_dat_avg.csv")
 ```
 
-```{r}
+## Logistic Regression
+```{r Log Reg setup}
+# PRFTLF
+# Reading in the 4th file
+load(file = "34453-0004-Data.rda")
+employ_dat_orig <- da34453.0004
+
+employ_dat <- employ_dat_orig %>%
+    select(TUCASEID, PRFTLF)
+
+
+
+activity_dat <- activity_dat %>%
+    select(
+        TUCASEID, TUACT_N, TEWHERE, TUACTDUR,
+        TUT1CODE, TUT2CODE, TUT3CODE, TRCODE
+    )
+
+summary_dat <- summary_dat %>%
+    select(
+        TUCASEID, TEAGE, TESEX, PEEDUCA, GTMETSTA,
+        TELFS, TRDPFTPT, TRERNWA, T010101:T189999
+    )
+
+head(activity_dat)
+head(summary_dat)
 ```
