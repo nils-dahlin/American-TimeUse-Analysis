@@ -157,11 +157,17 @@ salary_dat <- summary_dat %>%
 linear_dat <- left_join(linear_dat, salary_dat, by = "id")
 dim(linear_dat)
 
+linear_dat <- linear_dat %>%
+  select(-id)
+
 # removing rows with no income data
 linear_dat <- linear_dat[!is.na(linear_dat$weekly_income), ]
 dim(linear_dat)
 
+head(linear_dat)
 ```
+
+
 
 ```{r}
 # making the linear model
