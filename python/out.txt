@@ -1,0 +1,27 @@
+LUADDY_vals <- unique(linear_dat$LUADDY)
+
+# get the counts for each value for each cluster
+LUADDY_1 <- data.frame(table(cluster_1_rows$LUADDY))
+LUADDY_2 <- data.frame(table(cluster_2_rows$LUADDY))
+LUADDY_3 <- data.frame(table(cluster_3_rows$LUADDY))
+
+# add the cluster number to each dataframe
+LUADDY_1 <- mutate(LUADDY_1, cluster = 1)
+LUADDY_2 <- mutate(LUADDY_2, cluster = 2)
+LUADDY_3 <- mutate(LUADDY_3, cluster = 3)
+
+
+# rename the columns
+LUADDY_1 <- rename(LUADDY_1, LUADDY = Var1, Freq = Freq)
+LUADDY_2 <- rename(LUADDY_2, LUADDY = Var1, Freq = Freq)
+LUADDY_3 <- rename(LUADDY_3, LUADDY = Var1, Freq = Freq)
+
+# merge the dataframes
+LUADDY_dat <- rbind(LUADDY_1, LUADDY_2, LUADDY_3)
+LUADDY_dat
+
+# plot adjacent bars for each value for each cluster
+ggplot(LUADDY_dat, aes(x = cluster, y = Freq, fill = LUADDY)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Count of Each Value for LUADDY for Each Cluster", x = "Cluster", y = "Count") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))

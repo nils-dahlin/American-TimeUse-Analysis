@@ -29,12 +29,17 @@ load(file = "34453-0008-Data.rda")
 summary_dat_orig <- da34453.0008
 
 # surveyq_dat contains responses from individuals to survey questions
-# includes questions like: Years of college credit completed? 
+# includes questions like: Years of college credit completed?
 # Have you looked for work in the past year? How did you get your
 # highschool diploma?
 load(file = "34453-0004-Data.rda")
 surveyq_dat_orig <- da34453.0004
+
+# linear_dat contains the features used in the linear regression
+load(file = "34453-0011-Data.rda")
+linear_dat_orig <- da34453.0011
 ```
+
 
 #### Pulling Features We Need/Looking at the Raw Data
 ```{r reducing dataset}
@@ -50,15 +55,26 @@ summary_dat <- summary_dat_orig %>%
         TELFS, TRDPFTPT, TRERNWA, T010101:T189999
     )
 
-surveyq_dat <- surveyq_dat_orig %>% 
-  select(
-    TUCASEID, HEHOUSUT, HETENURE, HRNUMHOU, PEABSRSN, PECYC, PEJHRSN, PEDIPGED,
-    HUBUS,
-  )
+surveyq_dat <- surveyq_dat_orig %>%
+    select(
+        TUCASEID, HEHOUSUT, HETENURE, HRNUMHOU, 
+        PEABSRSN, PECYC, PEJHRSN # , PEDIPGED
+    )
+
+linear_dat <- linear_dat_orig %>%
+    select(
+        TUCASEID,
+        LEGNHTH, LEPAIN, LRADJ, LUADDY, LUADHR, 
+        LUADLOC, LULEAVE, LULVHRS, LULVYTD, LUPAID, 
+        LUPDBRTH, LUPDCC, LUPDEC, LUPDERR, LUPDFMIL, 
+        LUPDOIL, LUPDVAC, LUPTHOL, LUPTO, LUPTOHOL, 
+        LUPTOMAT, LUPTOSCK, LUPTPSL, LUPTSCK, LUPTVAC
+    )
 
 head(activity_dat)
 head(summary_dat)
 head(surveyq_dat)
+head(linear_dat)
 ```
 
 #### Renaming Certain Features/Columns
@@ -108,6 +124,11 @@ surveyq_dat <- surveyq_dat %>%
     )
 head(surveyq_dat)
 
+linear_dat <- linear_dat %>%
+    rename(
+        "id" = "TUCASEID",
+    )
+
 # Add two decimal places to weekly_income
 summary_dat$weekly_income <- summary_dat$weekly_income / 100
 ```
@@ -123,8 +144,8 @@ surveyq_dat[]
 #### Combining Datasets
 need to remove duplicates from surveyq_dat due to yrs_of_collegecred (keep non blank entries for duplicate id's)
 ```{r combine data}
-summary_dat <- summary_dat[!duplicated(summary_dat),]
-surveyq_dat <- surveyq_dat[!duplicated(surveyq_dat),]
+summary_dat <- summary_dat[!duplicated(summary_dat), ]
+surveyq_dat <- surveyq_dat[!duplicated(surveyq_dat), ]
 dim(summary_dat)
 dim(surveyq_dat)
 ```
@@ -133,9 +154,388 @@ dim(surveyq_dat)
 ## Linear Regression
 ### Set Up
 ```{r}
+# Want to find if flexibility in jobs is correlated with
+# the income of the individual
+
+# getting all salary data from summary_dat
+salary_dat <- summary_dat %>%
+    select(id, weekly_income)
+
+# matching the salary ids and the linear_dat ids
+linear_dat <- left_join(linear_dat, salary_dat, by = "id")
+dim(linear_dat)
+
+linear_dat <- linear_dat %>%
+  select(-id)
+
+# linear_dat$weekly_income <- linear_dat$weekly_income / 100
+
+# removing rows with no income data
+linear_dat <- linear_dat[!is.na(linear_dat$weekly_income), ]
+dim(linear_dat)
+
+head(linear_dat)
+```
+
+```{r linear train test}
+# training/testing data
+set.seed(47)
+lin_train <- sample(1:nrow(linear_dat), 0.8 * nrow(linear_dat))
+lin_test <- setdiff(1:nrow(linear_dat), lin_train)
+
+# making training and testing data
+lin_train_dat <- linear_dat[lin_train, ]
+lin_test_dat <- linear_dat[lin_test, ]
+```
+
+
+```{r}
+# making the linear model
+head(lin_train_dat)
+lm1 <- lm(weekly_income ~ ., data = lin_train_dat)
+summary(lm1)
+```
+
+```{r}
+# testing the model'
+pred <- predict(lm1, lin_test_dat)
+mse <- mean((pred - lin_test_dat$weekly_income)^2)
+mse
+sqrt(mse)
+```
+
+```{r}
+# average weekly income across entire dataset, as well as
+# sd
+mean(linear_dat$weekly_income)
+median(linear_dat$weekly_income)
+sd(linear_dat$weekly_income)
+```
+
+```{r}
+# density plot of weekly income
+plot(density(linear_dat$weekly_income))
+```
+```{r pca}
+# turn all data into numeric
+lin_pca <- as.data.frame(lapply(linear_dat, as.numeric))
+head(lin_pca)
+# run pca over linear_dat to 2 dimensions
+pca <- prcomp(lin_pca, scale = TRUE)
+summary(pca)
+```
+
+```{r}
+# graphing cumulative variance
+plot(pca, type = "l")
+```
+
+```{r}
+# plotting two dimensions
+plot(pca$x[,1], pca$x[,2])
+```
+
+```{r}
+# run cluster analysis on pca
+set.seed(74)
+kmeans_pca <- kmeans(pca$x, centers = 3)
+kmeans_pca
+```
+
+```{r}
+# red yellow green
+colors <- c("red", "orange", "green") 
+# plot the clusters with labels for which cluster they are
+plot(pca$x[,1], pca$x[,2], col = colors[kmeans_pca$cluster])
+# find the average pca values for each cluster and plot them a different yellow
+# points(kmeans_pca$centers[,1], kmeans_pca$centers[,2], col = "yellow", pch = 8, cex = 2)
+# print the centers in 2d
+text(kmeans_pca$centers[,1], kmeans_pca$centers[,2], labels = 1:3, col = "black")
+```
+
+```{r}
 
 ```
 
+```{r}
+
+```
+
+```{r}
+# get the average values in the linear data for each cluster
+cluster1 <- linear_dat[kmeans_pca$cluster == 1, ]
+cluster2 <- linear_dat[kmeans_pca$cluster == 2, ]
+cluster3 <- linear_dat[kmeans_pca$cluster == 3, ]
+
+# convert the cluster columnsn to numeric
+cluster1 <- as.data.frame(lapply(cluster1, as.numeric))
+cluster2 <- as.data.frame(lapply(cluster2, as.numeric))
+cluster3 <- as.data.frame(lapply(cluster3, as.numeric))
+
+# get the average values for each cluster
+avg1 <- colMeans(cluster1)
+avg2 <- colMeans(cluster2)
+avg3 <- colMeans(cluster3)
+
+# combine the averages into a dataframe
+avg_dat <- data.frame(avg1, avg2, avg3)
+
+# transpose the dataframe
+avg_dat <- t(avg_dat)
+
+# rename the columns
+rownames(avg_dat) <- c("cluster1", "cluster2", "cluster3")
+
+avg_dat
+
+```
+
+```{r}
+library(ggplot2)
+library(tidyr)
+# bar plot each variable next to each other
+# barplot(avg_dat, beside = TRUE, legend = TRUE, col = c("red", "blue", "green"))
+# using ggplot
+# side by side bar plot for each variable for each cluster with the y axis being the average value
+
+# convert the avg_dat to a dataframe
+avg_dat_graph <- as.data.frame(avg_dat)
+
+# add a column for the cluster
+avg_dat_graph$cluster <- rownames(avg_dat_graph)
+
+# convert the dataframe to long format
+avg_dat_graph <- gather(avg_dat_graph, variable, value, -cluster)
+
+# plot the data
+
+ggplot(avg_dat_graph, aes(x = variable, y = value, fill = cluster)) +
+  geom_bar(stat = "identity", position = "dodge") +
+      labs(title = "Average Values of Variables for Each Cluster", x = "Variables", y = "Average Value") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+```{r}
+# get the average salary for each cluster
+avg_sal <- linear_dat %>%
+  group_by(kmeans_pca$cluster) %>%
+  summarise(avg_sal = mean(weekly_income))
+
+# plot the average salary for each cluster with the colors
+ggplot(avg_dat_graph, aes(x = cluster, y = value, fill = cluster)) +
+  geom_bar(stat = "identity", position = "dodge") +
+      labs(title = "Average Salary for Each Cluster", x = "Cluster", y = "Average Salary") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+```
+
+```{r}
+# get average salary across entire dataset
+avg_sal_all <- mean(linear_dat$weekly_income)
+avg_sal_all
+```
+
+```{r}
+cluster_1_rows <- linear_dat[kmeans_pca$cluster == 1, ]
+cluster_2_rows <- linear_dat[kmeans_pca$cluster == 2, ]
+cluster_3_rows <- linear_dat[kmeans_pca$cluster == 3, ]
+
+# create a table for each cluster that has the total counts for each unique value
+cluster_1_table <- apply(cluster_1_rows, 2, table)
+cluster_2_table <- apply(cluster_2_rows, 2, table)
+cluster_3_table <- apply(cluster_3_rows, 2, table)
+
+# adding values that are missin but are in other clusters to the tables with a count of 0
+# get the unique values for each variable
+unique_vals <- lapply(linear_dat, unique)
+
+# get the unique values for each variable in each cluster
+unique_vals_1 <- lapply(cluster_1_rows, unique)
+unique_vals_2 <- lapply(cluster_2_rows, unique)
+unique_vals_3 <- lapply(cluster_3_rows, unique)
+
+# get the values that are in the unique values for each variable but not in the unique values for each cluster
+# and add them to the tables with a count of 0
+for (i in 1:length(unique_vals)) {
+  # get the variable name
+  var_name <- names(unique_vals)[i]
+  # get the unique values for the variable
+  var_vals <- unique_vals[[i]]
+  # get the unique values for the variable in each cluster
+  var_vals_1 <- unique_vals_1[[i]]
+  var_vals_2 <- unique_vals_2[[i]]
+  var_vals_3 <- unique_vals_3[[i]]
+  # get the values that are in the unique values for the variable but not in the unique values for the cluster
+  # and add them to the tables with a count of 0
+  for (j in 1:length(var_vals)) {
+    # get the value
+    val <- var_vals[j]
+    # check if the value is in the unique values for the variable in each cluster
+    if (!(val %in% var_vals_1)) {
+      # add the value to the table with a count of 0
+      cluster_1_table[[var_name]][[as.character(val)]] <- 0
+    }
+    if (!(val %in% var_vals_2)) {
+      # add the value to the table with a count of 0
+      cluster_2_table[[var_name]][[as.character(val)]] <- 0
+    }
+    if (!(val %in% var_vals_3)) {
+      # add the value to the table with a count of 0
+      cluster_3_table[[var_name]][[as.character(val)]] <- 0
+    }
+  }
+}
+
+# merge the tables into one dataframe
+cluster_tables <- cbind(cluster_1_table, cluster_2_table, cluster_3_table)
+
+cluster_tables
+
+```
+
+```{r}
+linear_dat
+
+```
+
+```{r}
+# creating a dataframe with the level of lepain and the count for each cluster
+# get the unique values for lepain
+lepain_vals <- unique(linear_dat$LEPAIN)
+
+# get the counts for each value for each cluster
+lepain_1 <- data.frame(table(cluster_1_rows$LEPAIN))
+lepain_2 <- data.frame(table(cluster_2_rows$LEPAIN))
+lepain_3 <- data.frame(table(cluster_3_rows$LEPAIN))
+
+# add the cluster number to each dataframe
+lepain_1 <- mutate(lepain_1, cluster = 1)
+lepain_2 <- mutate(lepain_2, cluster = 2)
+lepain_3 <- mutate(lepain_3, cluster = 3)
+
+
+# rename the columns
+lepain_1 <- rename(lepain_1, lepain = Var1, Freq = Freq)
+lepain_2 <- rename(lepain_2, lepain = Var1, Freq = Freq)
+lepain_3 <- rename(lepain_3, lepain = Var1, Freq = Freq)
+
+# merge the dataframes
+lepain_dat <- rbind(lepain_1, lepain_2, lepain_3)
+lepain_dat
+
+# change cluster to factor
+lepain_dat$cluster <- as.factor(lepain_dat$cluster)
+
+# plot adjacent bars for each value for each cluster
+ggplot(lepain_dat, aes(x = lepain, y = Freq, fill = cluster)) +
+  geom_bar(stat = "identity", position = "dodge", group = lepain_dat$lepain) +
+  labs(title = "Count of Each Value for lepain for Each Cluster", x = "Cluster", y = "Count") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+```{r}
+# creating a dataframe with the level of lepain and the count for each cluster
+# get the unique values for lepain
+xyz = "LRADJ"
+
+xyz_vals <- unique(linear_dat$xyz)
+
+# get the counts for each value for each cluster
+xyz_1 <- data.frame(table(cluster_1_rows$xyz))
+xyz_2 <- data.frame(table(cluster_2_rows$xyz))
+xyz_3 <- data.frame(table(cluster_3_rows$xyz))
+
+# add the cluster number to each dataframe
+xyz_1 <- mutate(xyz_1, cluster = 1)
+xyz_2 <- mutate(xyz_2, cluster = 2)
+xyz_3 <- mutate(xyz_3, cluster = 3)
+
+
+# rename the columns
+xyz_1 <- rename(xyz_1, lepain = Var1, Freq = Freq)
+xyz_2 <- rename(xyz_2, lepain = Var1, Freq = Freq)
+xyz_3 <- rename(xyz_3, lepain = Var1, Freq = Freq)
+
+# merge the dataframes
+xyz_dat <- rbind(xyz_1, xyz_2, xyz_3)
+xyz_dat
+
+# change cluster to factor
+xyz_dat$cluster <- as.factor(xyz_dat$cluster)
+
+
+# plot adjacent bars for each value for each cluster
+ggplot(xyz_dat, aes(x = cluster, y = Freq, fill = xyz)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Count of Each Value for xyz for Each Cluster", x = "Cluster", y = "Count") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+```{r}
+LRADJ_vals <- unique(linear_dat$LRADJ)
+
+# get the counts for each value for each cluster
+LRADJ_1 <- data.frame(table(cluster_1_rows$LRADJ))
+LRADJ_2 <- data.frame(table(cluster_2_rows$LRADJ))
+LRADJ_3 <- data.frame(table(cluster_3_rows$LRADJ))
+
+# add the cluster number to each dataframe
+LRADJ_1 <- mutate(LRADJ_1, cluster = 1)
+LRADJ_2 <- mutate(LRADJ_2, cluster = 2)
+LRADJ_3 <- mutate(LRADJ_3, cluster = 3)
+
+
+# rename the columns
+LRADJ_1 <- rename(LRADJ_1, LRADJ = Var1, Freq = Freq)
+LRADJ_2 <- rename(LRADJ_2, LRADJ = Var1, Freq = Freq)
+LRADJ_3 <- rename(LRADJ_3, LRADJ = Var1, Freq = Freq)
+
+# merge the dataframes
+LRADJ_dat <- rbind(LRADJ_1, LRADJ_2, LRADJ_3)
+LRADJ_dat
+
+# change cluster to factor
+LRADJ_dat$cluster <- as.factor(LRADJ_dat$cluster)
+
+# plot adjacent bars for each value for each cluster
+ggplot(LRADJ_dat, aes(x = LRADJ, y = Freq, fill = cluster)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Count of Each Value for LRADJ for Each Cluster", x = "Cluster", y = "Count") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+```{r}
+LUADDY_vals <- unique(linear_dat$LUADDY)
+
+# get the counts for each value for each cluster
+LUADDY_1 <- data.frame(table(cluster_1_rows$LUADDY))
+LUADDY_2 <- data.frame(table(cluster_2_rows$LUADDY))
+LUADDY_3 <- data.frame(table(cluster_3_rows$LUADDY))
+
+# add the cluster number to each dataframe
+LUADDY_1 <- mutate(LUADDY_1, cluster = 1)
+LUADDY_2 <- mutate(LUADDY_2, cluster = 2)
+LUADDY_3 <- mutate(LUADDY_3, cluster = 3)
+
+
+# rename the columns
+LUADDY_1 <- rename(LUADDY_1, LUADDY = Var1, Freq = Freq)
+LUADDY_2 <- rename(LUADDY_2, LUADDY = Var1, Freq = Freq)
+LUADDY_3 <- rename(LUADDY_3, LUADDY = Var1, Freq = Freq)
+
+# merge the dataframes
+LUADDY_dat <- rbind(LUADDY_1, LUADDY_2, LUADDY_3)
+LUADDY_dat
+
+# change cluster to factor
+LUADDY_dat$cluster <- as.factor(LUADDY_dat$cluster)
+
+# plot adjacent bars for each value for each cluster
+ggplot(LUADDY_dat, aes(x = LUADDY, y = Freq, fill = cluster)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Count of Each Value for LUADDY for Each Cluster", x = "Cluster", y = "Count") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
 
 ## Logisitic Regression - Part/Full-Time
 ### Set Up
@@ -143,9 +543,9 @@ dim(surveyq_dat)
 set.seed(0)
 
 # combine data
-temp = surveyq_dat %>% select(id,type_of_housing,ownership_of_home,num_in_household)
-temp = temp[!duplicated(temp),]
-temp = left_join(summary_dat,temp,by="id")
+temp <- surveyq_dat %>% select(id, type_of_housing, ownership_of_home, num_in_household)
+temp <- temp[!duplicated(temp), ]
+temp <- left_join(summary_dat, temp, by = "id")
 dim(temp)
 # grab only rows containing Full and Part Time Individuals
 logreg_dat = temp[temp$employment_level=="(1) Full time"|temp$employment_level=="(2) Part time",]
@@ -153,10 +553,10 @@ logreg_dat = logreg_dat %>% select(-(T010101:T189999))
 logreg_dat$employment_level = factor(logreg_dat$employment_level)
 
 # training/testing data
-summ_rows = nrow(summary_dat)
-train_samp = sample(1:summ_rows, summ_rows*.8)
-train = logreg_dat[train_samp,] %>% select(-id)
-test = logreg_dat[-train_samp,] %>% select(-id)
+summ_rows <- nrow(summary_dat)
+train_samp <- sample(1:summ_rows, summ_rows * .8)
+train <- logreg_dat[train_samp, ] %>% select(-id)
+test <- logreg_dat[-train_samp, ] %>% select(-id)
 
 dim(train)
 dim(test)
