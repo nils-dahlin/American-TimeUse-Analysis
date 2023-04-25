@@ -1,0 +1,30 @@
+xyz_vals <- unique(linear_dat$xyz)
+
+# get the counts for each value for each cluster
+xyz_1 <- data.frame(table(cluster_1_rows$xyz))
+xyz_2 <- data.frame(table(cluster_2_rows$xyz))
+xyz_3 <- data.frame(table(cluster_3_rows$xyz))
+
+# add the cluster number to each dataframe
+xyz_1 <- mutate(xyz_1, cluster = 1)
+xyz_2 <- mutate(xyz_2, cluster = 2)
+xyz_3 <- mutate(xyz_3, cluster = 3)
+
+
+# rename the columns
+xyz_1 <- rename(xyz_1, xyz = Var1, Freq = Freq)
+xyz_2 <- rename(xyz_2, xyz = Var1, Freq = Freq)
+xyz_3 <- rename(xyz_3, xyz = Var1, Freq = Freq)
+
+# merge the dataframes
+xyz_dat <- rbind(xyz_1, xyz_2, xyz_3)
+xyz_dat
+
+# change cluster to factor
+xyz_dat$cluster <- as.factor(xyz_dat$cluster)
+
+# plot adjacent bars for each value for each cluster
+ggplot(xyz_dat, aes(x = xyz, y = Freq, fill = cluster)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Count of Each Value for xyz for Each Cluster", x = "Cluster", y = "Count") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))

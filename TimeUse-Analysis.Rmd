@@ -171,7 +171,7 @@ head(linear_dat)
 
 ```{r linear train test}
 # training/testing data
-# set.seed(0)
+set.seed(47)
 lin_train <- sample(1:nrow(linear_dat), 0.8 * nrow(linear_dat))
 lin_test <- setdiff(1:nrow(linear_dat), lin_train)
 
@@ -229,6 +229,7 @@ plot(pca$x[,1], pca$x[,2])
 
 ```{r}
 # run cluster analysis on pca
+set.seed(74)
 kmeans_pca <- kmeans(pca$x, centers = 3)
 kmeans_pca
 ```
@@ -327,7 +328,6 @@ avg_sal_all
 ```
 
 ```{r}
-
 cluster_1_rows <- linear_dat[kmeans_pca$cluster == 1, ]
 cluster_2_rows <- linear_dat[kmeans_pca$cluster == 2, ]
 cluster_3_rows <- linear_dat[kmeans_pca$cluster == 3, ]
@@ -336,39 +336,198 @@ cluster_3_rows <- linear_dat[kmeans_pca$cluster == 3, ]
 cluster_1_table <- apply(cluster_1_rows, 2, table)
 cluster_2_table <- apply(cluster_2_rows, 2, table)
 cluster_3_table <- apply(cluster_3_rows, 2, table)
+
+# adding values that are missin but are in other clusters to the tables with a count of 0
+# get the unique values for each variable
+unique_vals <- lapply(linear_dat, unique)
+
+# get the unique values for each variable in each cluster
+unique_vals_1 <- lapply(cluster_1_rows, unique)
+unique_vals_2 <- lapply(cluster_2_rows, unique)
+unique_vals_3 <- lapply(cluster_3_rows, unique)
+
+# get the values that are in the unique values for each variable but not in the unique values for each cluster
+# and add them to the tables with a count of 0
+for (i in 1:length(unique_vals)) {
+  # get the variable name
+  var_name <- names(unique_vals)[i]
+  # get the unique values for the variable
+  var_vals <- unique_vals[[i]]
+  # get the unique values for the variable in each cluster
+  var_vals_1 <- unique_vals_1[[i]]
+  var_vals_2 <- unique_vals_2[[i]]
+  var_vals_3 <- unique_vals_3[[i]]
+  # get the values that are in the unique values for the variable but not in the unique values for the cluster
+  # and add them to the tables with a count of 0
+  for (j in 1:length(var_vals)) {
+    # get the value
+    val <- var_vals[j]
+    # check if the value is in the unique values for the variable in each cluster
+    if (!(val %in% var_vals_1)) {
+      # add the value to the table with a count of 0
+      cluster_1_table[[var_name]][[as.character(val)]] <- 0
+    }
+    if (!(val %in% var_vals_2)) {
+      # add the value to the table with a count of 0
+      cluster_2_table[[var_name]][[as.character(val)]] <- 0
+    }
+    if (!(val %in% var_vals_3)) {
+      # add the value to the table with a count of 0
+      cluster_3_table[[var_name]][[as.character(val)]] <- 0
+    }
+  }
+}
+
+# merge the tables into one dataframe
+cluster_tables <- cbind(cluster_1_table, cluster_2_table, cluster_3_table)
+
+cluster_tables
+
 ```
 
 ```{r}
-
-
-
-```
-
-```{r}
-```
-
-```{r}
-
+linear_dat
 
 ```
 
 ```{r}
+# creating a dataframe with the level of lepain and the count for each cluster
+# get the unique values for lepain
+lepain_vals <- unique(linear_dat$LEPAIN)
 
+# get the counts for each value for each cluster
+lepain_1 <- data.frame(table(cluster_1_rows$LEPAIN))
+lepain_2 <- data.frame(table(cluster_2_rows$LEPAIN))
+lepain_3 <- data.frame(table(cluster_3_rows$LEPAIN))
+
+# add the cluster number to each dataframe
+lepain_1 <- mutate(lepain_1, cluster = 1)
+lepain_2 <- mutate(lepain_2, cluster = 2)
+lepain_3 <- mutate(lepain_3, cluster = 3)
+
+
+# rename the columns
+lepain_1 <- rename(lepain_1, lepain = Var1, Freq = Freq)
+lepain_2 <- rename(lepain_2, lepain = Var1, Freq = Freq)
+lepain_3 <- rename(lepain_3, lepain = Var1, Freq = Freq)
+
+# merge the dataframes
+lepain_dat <- rbind(lepain_1, lepain_2, lepain_3)
+lepain_dat
+
+# change cluster to factor
+lepain_dat$cluster <- as.factor(lepain_dat$cluster)
+
+# plot adjacent bars for each value for each cluster
+ggplot(lepain_dat, aes(x = lepain, y = Freq, fill = cluster)) +
+  geom_bar(stat = "identity", position = "dodge", group = lepain_dat$lepain) +
+  labs(title = "Count of Each Value for lepain for Each Cluster", x = "Cluster", y = "Count") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
 ```{r}
+# creating a dataframe with the level of lepain and the count for each cluster
+# get the unique values for lepain
+xyz = "LRADJ"
+
+xyz_vals <- unique(linear_dat$xyz)
+
+# get the counts for each value for each cluster
+xyz_1 <- data.frame(table(cluster_1_rows$xyz))
+xyz_2 <- data.frame(table(cluster_2_rows$xyz))
+xyz_3 <- data.frame(table(cluster_3_rows$xyz))
+
+# add the cluster number to each dataframe
+xyz_1 <- mutate(xyz_1, cluster = 1)
+xyz_2 <- mutate(xyz_2, cluster = 2)
+xyz_3 <- mutate(xyz_3, cluster = 3)
+
+
+# rename the columns
+xyz_1 <- rename(xyz_1, lepain = Var1, Freq = Freq)
+xyz_2 <- rename(xyz_2, lepain = Var1, Freq = Freq)
+xyz_3 <- rename(xyz_3, lepain = Var1, Freq = Freq)
+
+# merge the dataframes
+xyz_dat <- rbind(xyz_1, xyz_2, xyz_3)
+xyz_dat
+
+# change cluster to factor
+xyz_dat$cluster <- as.factor(xyz_dat$cluster)
+
+
+# plot adjacent bars for each value for each cluster
+ggplot(xyz_dat, aes(x = cluster, y = Freq, fill = xyz)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Count of Each Value for xyz for Each Cluster", x = "Cluster", y = "Count") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
 ```{r}
+LRADJ_vals <- unique(linear_dat$LRADJ)
+
+# get the counts for each value for each cluster
+LRADJ_1 <- data.frame(table(cluster_1_rows$LRADJ))
+LRADJ_2 <- data.frame(table(cluster_2_rows$LRADJ))
+LRADJ_3 <- data.frame(table(cluster_3_rows$LRADJ))
+
+# add the cluster number to each dataframe
+LRADJ_1 <- mutate(LRADJ_1, cluster = 1)
+LRADJ_2 <- mutate(LRADJ_2, cluster = 2)
+LRADJ_3 <- mutate(LRADJ_3, cluster = 3)
+
+
+# rename the columns
+LRADJ_1 <- rename(LRADJ_1, LRADJ = Var1, Freq = Freq)
+LRADJ_2 <- rename(LRADJ_2, LRADJ = Var1, Freq = Freq)
+LRADJ_3 <- rename(LRADJ_3, LRADJ = Var1, Freq = Freq)
+
+# merge the dataframes
+LRADJ_dat <- rbind(LRADJ_1, LRADJ_2, LRADJ_3)
+LRADJ_dat
+
+# change cluster to factor
+LRADJ_dat$cluster <- as.factor(LRADJ_dat$cluster)
+
+# plot adjacent bars for each value for each cluster
+ggplot(LRADJ_dat, aes(x = LRADJ, y = Freq, fill = cluster)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Count of Each Value for LRADJ for Each Cluster", x = "Cluster", y = "Count") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
 ```{r}
+LUADDY_vals <- unique(linear_dat$LUADDY)
+
+# get the counts for each value for each cluster
+LUADDY_1 <- data.frame(table(cluster_1_rows$LUADDY))
+LUADDY_2 <- data.frame(table(cluster_2_rows$LUADDY))
+LUADDY_3 <- data.frame(table(cluster_3_rows$LUADDY))
+
+# add the cluster number to each dataframe
+LUADDY_1 <- mutate(LUADDY_1, cluster = 1)
+LUADDY_2 <- mutate(LUADDY_2, cluster = 2)
+LUADDY_3 <- mutate(LUADDY_3, cluster = 3)
 
 
+# rename the columns
+LUADDY_1 <- rename(LUADDY_1, LUADDY = Var1, Freq = Freq)
+LUADDY_2 <- rename(LUADDY_2, LUADDY = Var1, Freq = Freq)
+LUADDY_3 <- rename(LUADDY_3, LUADDY = Var1, Freq = Freq)
+
+# merge the dataframes
+LUADDY_dat <- rbind(LUADDY_1, LUADDY_2, LUADDY_3)
+LUADDY_dat
+
+# change cluster to factor
+LUADDY_dat$cluster <- as.factor(LUADDY_dat$cluster)
+
+# plot adjacent bars for each value for each cluster
+ggplot(LUADDY_dat, aes(x = LUADDY, y = Freq, fill = cluster)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Count of Each Value for LUADDY for Each Cluster", x = "Cluster", y = "Count") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
-
-
-
 
 ## Logisitic Regression - Part/Full-Time
 ### Set Up
