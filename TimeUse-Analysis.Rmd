@@ -118,6 +118,7 @@ summary_dat <- summary_dat[!duplicated(summary_dat),]
 surveyq_dat <- surveyq_dat[!duplicated(surveyq_dat),]
 dim(summary_dat)
 dim(surveyq_dat)
+
 ```
 
 
@@ -137,8 +138,10 @@ set.seed(0)
 temp = surveyq_dat %>% select(id,type_of_housing,ownership_of_home,num_in_household)
 temp = temp[!duplicated(temp),]
 temp = left_join(summary_dat,temp,by="id")
+dim(temp)
 # grab only rows containing Full and Part Time Individuals
 logreg_dat = temp[temp$employment_level!="(-1) Blank",]
+logreg_dat$employment_level = drop_na(logreg_dat$employment_level)
 
 # training/testing data
 summ_rows = nrow(summary_dat)
