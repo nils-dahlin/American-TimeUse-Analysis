@@ -160,6 +160,8 @@ dim(linear_dat)
 linear_dat <- linear_dat %>%
   select(-id)
 
+# linear_dat$weekly_income <- linear_dat$weekly_income / 100
+
 # removing rows with no income data
 linear_dat <- linear_dat[!is.na(linear_dat$weekly_income), ]
 dim(linear_dat)
@@ -167,18 +169,205 @@ dim(linear_dat)
 head(linear_dat)
 ```
 
+```{r linear train test}
+# training/testing data
+# set.seed(0)
+lin_train <- sample(1:nrow(linear_dat), 0.8 * nrow(linear_dat))
+lin_test <- setdiff(1:nrow(linear_dat), lin_train)
+
+# making training and testing data
+lin_train_dat <- linear_dat[lin_train, ]
+lin_test_dat <- linear_dat[lin_test, ]
+```
 
 
 ```{r}
 # making the linear model
-lm1 <- lm(weekly_income ~ ., data = linear_dat)
+head(lin_train_dat)
+lm1 <- lm(weekly_income ~ ., data = lin_train_dat)
 summary(lm1)
+```
+
+```{r}
+# testing the model'
+pred <- predict(lm1, lin_test_dat)
+mse <- mean((pred - lin_test_dat$weekly_income)^2)
+mse
+sqrt(mse)
+```
+
+```{r}
+# average weekly income across entire dataset, as well as
+# sd
+mean(linear_dat$weekly_income)
+median(linear_dat$weekly_income)
+sd(linear_dat$weekly_income)
+```
+
+```{r}
+# density plot of weekly income
+plot(density(linear_dat$weekly_income))
+```
+```{r pca}
+# turn all data into numeric
+lin_pca <- as.data.frame(lapply(linear_dat, as.numeric))
+head(lin_pca)
+# run pca over linear_dat to 2 dimensions
+pca <- prcomp(lin_pca, scale = TRUE)
+summary(pca)
+```
+
+```{r}
+# graphing cumulative variance
+plot(pca, type = "l")
+```
+
+```{r}
+# plotting two dimensions
+plot(pca$x[,1], pca$x[,2])
+```
+
+```{r}
+# run cluster analysis on pca
+kmeans_pca <- kmeans(pca$x, centers = 3)
+kmeans_pca
+```
+
+```{r}
+# red yellow green
+colors <- c("red", "orange", "green") 
+# plot the clusters with labels for which cluster they are
+plot(pca$x[,1], pca$x[,2], col = colors[kmeans_pca$cluster])
+# find the average pca values for each cluster and plot them a different yellow
+# points(kmeans_pca$centers[,1], kmeans_pca$centers[,2], col = "yellow", pch = 8, cex = 2)
+# print the centers in 2d
+text(kmeans_pca$centers[,1], kmeans_pca$centers[,2], labels = 1:3, col = "black")
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+# get the average values in the linear data for each cluster
+cluster1 <- linear_dat[kmeans_pca$cluster == 1, ]
+cluster2 <- linear_dat[kmeans_pca$cluster == 2, ]
+cluster3 <- linear_dat[kmeans_pca$cluster == 3, ]
+
+# convert the cluster columnsn to numeric
+cluster1 <- as.data.frame(lapply(cluster1, as.numeric))
+cluster2 <- as.data.frame(lapply(cluster2, as.numeric))
+cluster3 <- as.data.frame(lapply(cluster3, as.numeric))
+
+# get the average values for each cluster
+avg1 <- colMeans(cluster1)
+avg2 <- colMeans(cluster2)
+avg3 <- colMeans(cluster3)
+
+# combine the averages into a dataframe
+avg_dat <- data.frame(avg1, avg2, avg3)
+
+# transpose the dataframe
+avg_dat <- t(avg_dat)
+
+# rename the columns
+rownames(avg_dat) <- c("cluster1", "cluster2", "cluster3")
+
+avg_dat
+
+```
+
+```{r}
+library(ggplot2)
+library(tidyr)
+# bar plot each variable next to each other
+# barplot(avg_dat, beside = TRUE, legend = TRUE, col = c("red", "blue", "green"))
+# using ggplot
+# side by side bar plot for each variable for each cluster with the y axis being the average value
+
+# convert the avg_dat to a dataframe
+avg_dat_graph <- as.data.frame(avg_dat)
+
+# add a column for the cluster
+avg_dat_graph$cluster <- rownames(avg_dat_graph)
+
+# convert the dataframe to long format
+avg_dat_graph <- gather(avg_dat_graph, variable, value, -cluster)
+
+# plot the data
+
+ggplot(avg_dat_graph, aes(x = variable, y = value, fill = cluster)) +
+  geom_bar(stat = "identity", position = "dodge") +
+      labs(title = "Average Values of Variables for Each Cluster", x = "Variables", y = "Average Value") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+```{r}
+# get the average salary for each cluster
+avg_sal <- linear_dat %>%
+  group_by(kmeans_pca$cluster) %>%
+  summarise(avg_sal = mean(weekly_income))
+
+# plot the average salary for each cluster with the colors
+ggplot(avg_dat_graph, aes(x = cluster, y = value, fill = cluster)) +
+  geom_bar(stat = "identity", position = "dodge") +
+      labs(title = "Average Salary for Each Cluster", x = "Cluster", y = "Average Salary") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+```
+
+```{r}
+# get average salary across entire dataset
+avg_sal_all <- mean(linear_dat$weekly_income)
+avg_sal_all
+```
+
+```{r}
+
+cluster_1_rows <- linear_dat[kmeans_pca$cluster == 1, ]
+cluster_2_rows <- linear_dat[kmeans_pca$cluster == 2, ]
+cluster_3_rows <- linear_dat[kmeans_pca$cluster == 3, ]
+
+# create a table for each cluster that has the total counts for each unique value
+cluster_1_table <- apply(cluster_1_rows, 2, table)
+cluster_2_table <- apply(cluster_2_rows, 2, table)
+cluster_3_table <- apply(cluster_3_rows, 2, table)
+```
+
+```{r}
+
+
+
+```
+
+```{r}
 ```
 
 ```{r}
 
 
 ```
+
+```{r}
+
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+
+
+```
+
+
 
 
 ## Logisitic Regression - Part/Full-Time
