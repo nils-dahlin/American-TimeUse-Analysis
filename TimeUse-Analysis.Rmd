@@ -29,12 +29,17 @@ load(file = "34453-0008-Data.rda")
 summary_dat_orig <- da34453.0008
 
 # surveyq_dat contains responses from individuals to survey questions
-# includes questions like: Years of college credit completed? 
+# includes questions like: Years of college credit completed?
 # Have you looked for work in the past year? How did you get your
 # highschool diploma?
 load(file = "34453-0004-Data.rda")
 surveyq_dat_orig <- da34453.0004
+
+# linear_dat contains the features used in the linear regression
+load(file = "34453-0011-Data.rda")
+linear_dat_orig <- da34453.0011
 ```
+
 
 #### Pulling Features We Need/Looking at the Raw Data
 ```{r reducing dataset}
@@ -50,14 +55,26 @@ summary_dat <- summary_dat_orig %>%
         TELFS, TRDPFTPT, TRERNWA, T010101:T189999
     )
 
-surveyq_dat <- surveyq_dat_orig %>% 
-  select(
-    TUCASEID, HEHOUSUT, HETENURE, HRNUMHOU, PEABSRSN, PECYC, PEJHRSN#, PEDIPGED 
-  )
+surveyq_dat <- surveyq_dat_orig %>%
+    select(
+        TUCASEID, HEHOUSUT, HETENURE, HRNUMHOU, 
+        PEABSRSN, PECYC, PEJHRSN # , PEDIPGED
+    )
+
+linear_dat <- linear_dat_orig %>%
+    select(
+        TUCASEID,
+        LEGNHTH, LEPAIN, LRADJ, LUADDY, LUADHR, 
+        LUADLOC, LULEAVE, LULVHRS, LULVYTD, LUPAID, 
+        LUPDBRTH, LUPDCC, LUPDEC, LUPDERR, LUPDFMIL, 
+        LUPDOIL, LUPDVAC, LUPTHOL, LUPTO, LUPTOHOL, 
+        LUPTOMAT, LUPTOSCK, LUPTPSL, LUPTSCK, LUPTVAC
+    )
 
 head(activity_dat)
 head(summary_dat)
 head(surveyq_dat)
+head(linear_dat)
 ```
 
 #### Renaming Certain Features/Columns
@@ -102,10 +119,15 @@ surveyq_dat <- surveyq_dat %>%
         "num_in_household" = "HRNUMHOU",
         "missed_work" = "PEABSRSN",
         "yrs_of_collegecred" = "PECYC",
-        #"how_hs_diploma" = "PEDIPGED",
+        # "how_hs_diploma" = "PEDIPGED",
         "left_last_job" = "PEJHRSN"
     )
 head(surveyq_dat)
+
+linear_dat <- linear_dat %>%
+    rename(
+        "id" = "TUCASEID",
+    )
 
 # Add two decimal places to weekly_income
 summary_dat$weekly_income <- summary_dat$weekly_income / 100
@@ -114,17 +136,41 @@ summary_dat$weekly_income <- summary_dat$weekly_income / 100
 #### Combining Datasets
 need to remove duplicates from surveyq_dat due to yrs_of_collegecred (keep non blank entries for duplicate id's)
 ```{r combine data}
-summary_dat <- summary_dat[!duplicated(summary_dat),]
-surveyq_dat <- surveyq_dat[!duplicated(surveyq_dat),]
+summary_dat <- summary_dat[!duplicated(summary_dat), ]
+surveyq_dat <- surveyq_dat[!duplicated(surveyq_dat), ]
 dim(summary_dat)
 dim(surveyq_dat)
-
 ```
 
 
 ## Linear Regression
 ### Set Up
 ```{r}
+# Want to find if flexibility in jobs is correlated with
+# the income of the individual
+
+# getting all salary data from summary_dat
+salary_dat <- summary_dat %>%
+    select(id, weekly_income)
+
+# matching the salary ids and the linear_dat ids
+linear_dat <- left_join(linear_dat, salary_dat, by = "id")
+dim(linear_dat)
+
+# removing rows with no income data
+linear_dat <- linear_dat[!is.na(linear_dat$weekly_income), ]
+dim(linear_dat)
+
+```
+
+```{r}
+# making the linear model
+lm1 <- lm(weekly_income ~ ., data = linear_dat)
+summary(lm1)
+```
+
+```{r}
+
 
 ```
 
@@ -135,28 +181,26 @@ dim(surveyq_dat)
 set.seed(0)
 
 # combine data
-temp = surveyq_dat %>% select(id,type_of_housing,ownership_of_home,num_in_household)
-temp = temp[!duplicated(temp),]
-temp = left_join(summary_dat,temp,by="id")
+temp <- surveyq_dat %>% select(id, type_of_housing, ownership_of_home, num_in_household)
+temp <- temp[!duplicated(temp), ]
+temp <- left_join(summary_dat, temp, by = "id")
 dim(temp)
 # grab only rows containing Full and Part Time Individuals
-logreg_dat = temp[temp$employment_level!="(-1) Blank",]
-logreg_dat$employment_level = drop_na(logreg_dat$employment_level)
+logreg_dat <- temp[temp$employment_level != "(-1) Blank", ]
+logreg_dat$employment_level <- drop_na(logreg_dat$employment_level)
 
 # training/testing data
-summ_rows = nrow(summary_dat)
-train_samp = sample(1:summ_rows, summ_rows*.8)
-train = logreg_dat[train_samp,] %>% select(-id)
-test = logreg_dat[-train_samp,] %>% select(-id)
+summ_rows <- nrow(summary_dat)
+train_samp <- sample(1:summ_rows, summ_rows * .8)
+train <- logreg_dat[train_samp, ] %>% select(-id)
+test <- logreg_dat[-train_samp, ] %>% select(-id)
 
 dim(train)
 dim(test)
-
 ```
 ### GLM Model
 ```{r logreg model}
-logreg <- glm(employment_level~.,data = logreg_dat)
-
+logreg <- glm(employment_level ~ ., data = logreg_dat)
 ```
 ```{r}
 
