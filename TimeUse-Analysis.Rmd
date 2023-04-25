@@ -52,7 +52,8 @@ summary_dat <- summary_dat_orig %>%
 
 surveyq_dat <- surveyq_dat_orig %>% 
   select(
-    TUCASEID, HEHOUSUT, HETENURE, HRNUMHOU, PEABSRSN, PECYC, PEJHRSN#, PEDIPGED 
+    TUCASEID, HEHOUSUT, HETENURE, HRNUMHOU, PEABSRSN, PECYC, PEJHRSN, PEDIPGED,
+    HUBUS,
   )
 
 head(activity_dat)
@@ -102,7 +103,7 @@ surveyq_dat <- surveyq_dat %>%
         "num_in_household" = "HRNUMHOU",
         "missed_work" = "PEABSRSN",
         "yrs_of_collegecred" = "PECYC",
-        #"how_hs_diploma" = "PEDIPGED",
+        "how_hs_diploma" = "PEDIPGED",
         "left_last_job" = "PEJHRSN"
     )
 head(surveyq_dat)
@@ -111,6 +112,14 @@ head(surveyq_dat)
 summary_dat$weekly_income <- summary_dat$weekly_income / 100
 ```
 
+```{r testing dat}
+dim(surveyq_dat)
+surveyq_dat[duplicated(surveyq_dat$TUCASEID),]
+
+surveyq_dat[]
+```
+
+
 #### Combining Datasets
 need to remove duplicates from surveyq_dat due to yrs_of_collegecred (keep non blank entries for duplicate id's)
 ```{r combine data}
@@ -118,7 +127,6 @@ summary_dat <- summary_dat[!duplicated(summary_dat),]
 surveyq_dat <- surveyq_dat[!duplicated(surveyq_dat),]
 dim(summary_dat)
 dim(surveyq_dat)
-
 ```
 
 
@@ -140,8 +148,9 @@ temp = temp[!duplicated(temp),]
 temp = left_join(summary_dat,temp,by="id")
 dim(temp)
 # grab only rows containing Full and Part Time Individuals
-logreg_dat = temp[temp$employment_level!="(-1) Blank",]
-logreg_dat$employment_level = drop_na(logreg_dat$employment_level)
+logreg_dat = temp[temp$employment_level=="(1) Full time"|temp$employment_level=="(2) Part time",]
+logreg_dat = logreg_dat %>% select(-(T010101:T189999))
+logreg_dat$employment_level = factor(logreg_dat$employment_level)
 
 # training/testing data
 summ_rows = nrow(summary_dat)
@@ -151,15 +160,20 @@ test = logreg_dat[-train_samp,] %>% select(-id)
 
 dim(train)
 dim(test)
-
+unique(logreg_dat$employment_level)
 ```
 ### GLM Model
 ```{r logreg model}
-logreg <- glm(employment_level~.,data = logreg_dat)
+logreg <- glm(formula=employment_level~., data = train, family = "binomial")
 
 ```
-```{r}
 
+```{r}
+summary(logreg)
+```
+```{r}
+test_pred = predict(logreg, test)
+actual = test$employment_level
 ```
 
 
