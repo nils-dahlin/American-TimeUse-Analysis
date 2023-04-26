@@ -8,6 +8,7 @@ output: html_document
 # Examining the Time Use of Americans and Predicting Personal Features 
 
 
+## Data Setup
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
@@ -41,7 +42,7 @@ linear_dat_orig <- da34453.0011
 ```
 
 
-#### Pulling Features We Need/Looking at the Raw Data
+### Pulling Features We Need/Looking at the Raw Data
 ```{r reducing dataset}
 activity_dat <- activity_dat_orig %>%
     select(
@@ -58,7 +59,7 @@ summary_dat <- summary_dat_orig %>%
 surveyq_dat <- surveyq_dat_orig %>%
     select(
         TUCASEID, HEHOUSUT, HETENURE, HRNUMHOU, 
-        PEABSRSN, PECYC, PEJHRSN # , PEDIPGED
+        PEABSRSN, PECYC, PEJHRSN, PEDIPGED
     )
 
 linear_dat <- linear_dat_orig %>%
@@ -77,8 +78,8 @@ head(surveyq_dat)
 head(linear_dat)
 ```
 
-#### Renaming Certain Features/Columns
-if this code chunk has errors, rerun one above
+### Renaming Certain Features/Columns
+If this code chunk has errors, rerun one above
 ```{r renaming features}
 # in activity_dat the three TUTCODE's are the codes for the
 # primary, secondary, and tertiary activity codes which combined
@@ -141,7 +142,7 @@ surveyq_dat[]
 ```
 
 
-#### Combining Datasets
+### Combining Datasets
 need to remove duplicates from surveyq_dat due to yrs_of_collegecred (keep non blank entries for duplicate id's)
 ```{r combine data}
 summary_dat <- summary_dat[!duplicated(summary_dat), ]
@@ -153,7 +154,7 @@ dim(surveyq_dat)
 
 ## Linear Regression
 ### Set Up
-```{r}
+```{r data set up}
 # Want to find if flexibility in jobs is correlated with
 # the income of the individual
 
@@ -188,7 +189,21 @@ lin_train_dat <- linear_dat[lin_train, ]
 lin_test_dat <- linear_dat[lin_test, ]
 ```
 
+### Statistics About the Dataset
+```{r}
+# average weekly income across entire dataset, as well as
+# sd
+mean(linear_dat$weekly_income)
+median(linear_dat$weekly_income)
+sd(linear_dat$weekly_income)
+```
 
+```{r}
+# density plot of weekly income
+plot(density(linear_dat$weekly_income))
+```
+
+### Making the Model
 ```{r}
 # making the linear model
 head(lin_train_dat)
@@ -204,18 +219,7 @@ mse
 sqrt(mse)
 ```
 
-```{r}
-# average weekly income across entire dataset, as well as
-# sd
-mean(linear_dat$weekly_income)
-median(linear_dat$weekly_income)
-sd(linear_dat$weekly_income)
-```
-
-```{r}
-# density plot of weekly income
-plot(density(linear_dat$weekly_income))
-```
+### PCA
 ```{r pca}
 # turn all data into numeric
 lin_pca <- as.data.frame(lapply(linear_dat, as.numeric))
@@ -235,6 +239,7 @@ plot(pca, type = "l")
 plot(pca$x[,1], pca$x[,2])
 ```
 
+### Cluster Analysis on PCA
 ```{r}
 # run cluster analysis on pca
 set.seed(74)
@@ -253,15 +258,13 @@ plot(pca$x[,1], pca$x[,2], col = colors[kmeans_pca$cluster])
 text(kmeans_pca$centers[,1], kmeans_pca$centers[,2], labels = 1:3, col = "black")
 ```
 
-```{r}
-
-```
 
 ```{r}
+# This and the following code block were originally meant to analyze some data
+# but it wasn't meaningful because the data categories weren't ordinal
+# The dataset avg_dat_graph is needed though, so these blocks still need to
+# be run.
 
-```
-
-```{r}
 # get the average values in the linear data for each cluster
 cluster1 <- linear_dat[kmeans_pca$cluster == 1, ]
 cluster2 <- linear_dat[kmeans_pca$cluster == 2, ]
@@ -307,12 +310,12 @@ avg_dat_graph$cluster <- rownames(avg_dat_graph)
 # convert the dataframe to long format
 avg_dat_graph <- gather(avg_dat_graph, variable, value, -cluster)
 
-# plot the data
-
-ggplot(avg_dat_graph, aes(x = variable, y = value, fill = cluster)) +
-  geom_bar(stat = "identity", position = "dodge") +
-      labs(title = "Average Values of Variables for Each Cluster", x = "Variables", y = "Average Value") +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1))
+# # plot the data
+# 
+# ggplot(avg_dat_graph, aes(x = variable, y = value, fill = cluster)) +
+#   geom_bar(stat = "identity", position = "dodge") +
+#       labs(title = "Average Values of Variables for Each Cluster", x = "Variables", y = "Average Value") +
+#     theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
 ```{r}
@@ -335,67 +338,13 @@ avg_sal_all <- mean(linear_dat$weekly_income)
 avg_sal_all
 ```
 
+### Cluster Plotting
 ```{r}
 cluster_1_rows <- linear_dat[kmeans_pca$cluster == 1, ]
 cluster_2_rows <- linear_dat[kmeans_pca$cluster == 2, ]
 cluster_3_rows <- linear_dat[kmeans_pca$cluster == 3, ]
 
-# create a table for each cluster that has the total counts for each unique value
-cluster_1_table <- apply(cluster_1_rows, 2, table)
-cluster_2_table <- apply(cluster_2_rows, 2, table)
-cluster_3_table <- apply(cluster_3_rows, 2, table)
-
-# adding values that are missin but are in other clusters to the tables with a count of 0
-# get the unique values for each variable
-unique_vals <- lapply(linear_dat, unique)
-
-# get the unique values for each variable in each cluster
-unique_vals_1 <- lapply(cluster_1_rows, unique)
-unique_vals_2 <- lapply(cluster_2_rows, unique)
-unique_vals_3 <- lapply(cluster_3_rows, unique)
-
-# get the values that are in the unique values for each variable but not in the unique values for each cluster
-# and add them to the tables with a count of 0
-for (i in 1:length(unique_vals)) {
-  # get the variable name
-  var_name <- names(unique_vals)[i]
-  # get the unique values for the variable
-  var_vals <- unique_vals[[i]]
-  # get the unique values for the variable in each cluster
-  var_vals_1 <- unique_vals_1[[i]]
-  var_vals_2 <- unique_vals_2[[i]]
-  var_vals_3 <- unique_vals_3[[i]]
-  # get the values that are in the unique values for the variable but not in the unique values for the cluster
-  # and add them to the tables with a count of 0
-  for (j in 1:length(var_vals)) {
-    # get the value
-    val <- var_vals[j]
-    # check if the value is in the unique values for the variable in each cluster
-    if (!(val %in% var_vals_1)) {
-      # add the value to the table with a count of 0
-      cluster_1_table[[var_name]][[as.character(val)]] <- 0
-    }
-    if (!(val %in% var_vals_2)) {
-      # add the value to the table with a count of 0
-      cluster_2_table[[var_name]][[as.character(val)]] <- 0
-    }
-    if (!(val %in% var_vals_3)) {
-      # add the value to the table with a count of 0
-      cluster_3_table[[var_name]][[as.character(val)]] <- 0
-    }
-  }
-}
-
-# merge the tables into one dataframe
-cluster_tables <- cbind(cluster_1_table, cluster_2_table, cluster_3_table)
-
-cluster_tables
-
-```
-
-```{r}
 linear_dat
-
 ```
 
 ```{r}
@@ -433,43 +382,6 @@ ggplot(lepain_dat, aes(x = lepain, y = Freq, fill = cluster)) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
-```{r}
-# creating a dataframe with the level of lepain and the count for each cluster
-# get the unique values for lepain
-xyz = "LRADJ"
-
-xyz_vals <- unique(linear_dat$xyz)
-
-# get the counts for each value for each cluster
-xyz_1 <- data.frame(table(cluster_1_rows$xyz))
-xyz_2 <- data.frame(table(cluster_2_rows$xyz))
-xyz_3 <- data.frame(table(cluster_3_rows$xyz))
-
-# add the cluster number to each dataframe
-xyz_1 <- mutate(xyz_1, cluster = 1)
-xyz_2 <- mutate(xyz_2, cluster = 2)
-xyz_3 <- mutate(xyz_3, cluster = 3)
-
-
-# rename the columns
-xyz_1 <- rename(xyz_1, lepain = Var1, Freq = Freq)
-xyz_2 <- rename(xyz_2, lepain = Var1, Freq = Freq)
-xyz_3 <- rename(xyz_3, lepain = Var1, Freq = Freq)
-
-# merge the dataframes
-xyz_dat <- rbind(xyz_1, xyz_2, xyz_3)
-xyz_dat
-
-# change cluster to factor
-xyz_dat$cluster <- as.factor(xyz_dat$cluster)
-
-
-# plot adjacent bars for each value for each cluster
-ggplot(xyz_dat, aes(x = cluster, y = Freq, fill = xyz)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  labs(title = "Count of Each Value for xyz for Each Cluster", x = "Cluster", y = "Count") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
-```
 
 ```{r}
 LRADJ_vals <- unique(linear_dat$LRADJ)
