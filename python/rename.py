@@ -1,6 +1,6 @@
 # take in inp.txt and replace all "xyz" with the val below
 
-val = "LUADDY"
+val = "LULVHRS"
 
 with open("inp.txt", "r") as f:
     lines = f.readlines()

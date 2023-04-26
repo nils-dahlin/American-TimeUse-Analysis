@@ -1,3 +1,4 @@
+```{r}
 xyz_vals <- unique(linear_dat$xyz)
 
 # get the counts for each value for each cluster
@@ -9,7 +10,6 @@ xyz_3 <- data.frame(table(cluster_3_rows$xyz))
 xyz_1 <- mutate(xyz_1, cluster = 1)
 xyz_2 <- mutate(xyz_2, cluster = 2)
 xyz_3 <- mutate(xyz_3, cluster = 3)
-
 
 # rename the columns
 xyz_1 <- rename(xyz_1, xyz = Var1, Freq = Freq)
@@ -28,3 +28,34 @@ ggplot(xyz_dat, aes(x = xyz, y = Freq, fill = cluster)) +
   geom_bar(stat = "identity", position = "dodge") +
   labs(title = "Count of Each Value for xyz for Each Cluster", x = "Cluster", y = "Count") +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+```{r}
+# plotting the percentage of each value for lepain for each cluster
+# get the total number of rows for each cluster
+xyz_total_1 <- nrow(cluster_1_rows)
+xyz_total_2 <- nrow(cluster_2_rows)
+xyz_total_3 <- nrow(cluster_3_rows)
+
+# get the percentage of each value for each cluster
+xyz_1 <- mutate(xyz_1, percent = Freq / xyz_total_1)
+xyz_2 <- mutate(xyz_2, percent = Freq / xyz_total_2)
+xyz_3 <- mutate(xyz_3, percent = Freq / xyz_total_3)
+
+# printing the values to make sure they equal 1
+sum(xyz_1$percent)
+sum(xyz_2$percent)
+sum(xyz_3$percent)
+
+# merge the dataframes
+xyz_dat <- rbind(xyz_1, xyz_2, xyz_3)
+
+# change cluster to factor
+xyz_dat$cluster <- as.factor(xyz_dat$cluster)
+
+# plot the data
+ggplot(xyz_dat, aes(x = xyz, y = percent, fill = cluster)) +
+  geom_bar(stat = "identity", position = "dodge", group = xyz_dat$xyz) +
+  labs(title = "Percentage of Each Value for xyz for Each Cluster", x = "Cluster", y = "Percentage") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
