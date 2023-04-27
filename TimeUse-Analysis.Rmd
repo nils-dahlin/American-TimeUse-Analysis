@@ -21,6 +21,8 @@ library(tidyr)
 library(randomForest)
 library(glmnet)
 library(ranger)
+library(corrplot)
+library(car)
 
 # activity_dat contains the data/features regarding the
 # activities respondents did throughout the week as well
@@ -63,7 +65,7 @@ summary_dat <- summary_dat_orig %>%
 
 surveyq_dat <- surveyq_dat_orig %>%
     select(
-        TUCASEID, HEHOUSUT, HETENURE, HRNUMHOU, 
+        TUCASEID, HEHOUSUT, HETENURE, HRNUMHOU,
         PEABSRSN, PECYC, PEJHRSN, PEDIPGED, PEAFEVER,
         PEDISREM, PEDISDRS, PEDISEAR, PEDISEYE, PEDISOUT,
         PEDISPHY, PEERNLAB
@@ -72,11 +74,14 @@ surveyq_dat <- surveyq_dat_orig %>%
 linear_dat <- linear_dat_orig %>%
     select(
         TUCASEID,
-        LEGNHTH, LEPAIN, LRADJ, LUADDY, LUADHR, 
-        LUADLOC, LULEAVE, LULVHRS, LULVYTD, LUPAID, 
-        LUPDBRTH, LUPDCC, LUPDEC, LUPDERR, LUPDFMIL, 
-        LUPDOIL, LUPDVAC, LUPTHOL, LUPTO, LUPTOHOL, 
-        LUPTOMAT, LUPTOSCK, LUPTPSL, LUPTSCK, LUPTVAC
+        # LEGNHTH, LEPAIN,
+        LRADJ, LUADDY, LUADHR,
+        LUADLOC, LULEAVE, LULVHRS, LULVYTD, LUPAID,
+        LUPDBRTH, LUPDCC, LUPDEC, LUPDERR, LUPDFMIL,
+        LUPDOIL, LUPDVAC, LUPTHOL, LUPTO, LUPTOHOL,
+        LUPTOMAT, LUPTOSCK, LUPTPSL, LUPTSCK, LUPTVAC,
+        LUUNBRTH, LUUNCC, LUUNEC, LUUNERR, LUUNEVR,
+        LUUNEVR1:LUUNEVR7, LUUNFMIL, LUUNOIL, LUUNPD,
     )
 
 head(activity_dat)
@@ -151,7 +156,7 @@ summary_dat$weekly_income <- summary_dat$weekly_income / 100
 ### Surveyq Test
 ```{r testing dat}
 dim(surveyq_dat)
-surveyq_dat[duplicated(surveyq_dat$TUCASEID),]
+surveyq_dat[duplicated(surveyq_dat$TUCASEID), ]
 
 surveyq_dat[]
 ```
@@ -182,7 +187,7 @@ linear_dat <- left_join(linear_dat, salary_dat, by = "id")
 dim(linear_dat)
 
 linear_dat <- linear_dat %>%
-  select(-id)
+    select(-id)
 
 # linear_dat$weekly_income <- linear_dat$weekly_income / 100
 
@@ -193,9 +198,24 @@ dim(linear_dat)
 head(linear_dat)
 ```
 
+```{r}
+# making the "(-1) Blank" entries NA
+# linear_dat[linear_dat == "(-1) Blank"] <- NA
+# linear_dat
+# Finding all columns that doesn't have >=2 unique values
+# and removing them
+# linear_dat <- linear_dat[, sapply(linear_dat, function(x) length(unique(x))) >= 2]
+# linear_dat
+# # printing the unique values for each column
+# for (i in 1:ncol(linear_dat)) {
+#     print(unique(linear_dat[, i]))
+# }
+
+```
+
 ```{r linear train test}
 # training/testing data
-set.seed(47)
+# set.seed(47)
 lin_train <- sample(1:nrow(linear_dat), 0.8 * nrow(linear_dat))
 lin_test <- setdiff(1:nrow(linear_dat), lin_train)
 
@@ -226,9 +246,33 @@ lm1 <- lm(weekly_income ~ ., data = lin_train_dat)
 summary(lm1)
 ```
 
+```{r echo = FALSE results = hide}
+# Using stepwise variable selection to make a more interpretable model
+# This steps both forwads and back
+step_lm1 <- step(lm1, direction = "both");
+plot(step_lm1)
+```
+
+```{r}
+plot(step_lm1$anova$AIC, xlab = "Number of variables", ylab = "AIC")
+lin_train_dat[575,]
+```
+
+```{r}
+step_lm1
+# This is the best model according to AIC
+lm2 <- lm(weekly_income ~ LUADDY + LUADHR + LUADLOC + LUPAID + 
+    LUPDBRTH + LUPDFMIL + LUPDOIL + LUPTO + LUPTOHOL + LUPTOSCK + 
+    LUPTSCK + LUPTVAC, data = lin_train_dat)
+```
+
+```{r}
+summary(lm2)
+```
+
 ```{r}
 # testing the model
-pred <- predict(lm1, lin_test_dat)
+pred <- predict(lm2, lin_test_dat)
 mse <- mean((pred - lin_test_dat$weekly_income)^2)
 mse
 sqrt(mse)
@@ -251,7 +295,7 @@ plot(pca, type = "l")
 
 ```{r}
 # plotting two dimensions
-plot(pca$x[,1], pca$x[,2])
+plot(pca$x[, 1], pca$x[, 2])
 ```
 
 ### Cluster Analysis on PCA
@@ -264,11 +308,11 @@ kmeans_pca
 
 ```{r}
 # red yellow green
-colors <- c("red", "orange", "green") 
+colors <- c("red", "orange", "green")
 # plot the clusters with labels for which cluster they are
-plot(pca$x[,1], pca$x[,2], col = colors[kmeans_pca$cluster])
+plot(pca$x[, 1], pca$x[, 2], col = colors[kmeans_pca$cluster])
 # putting the labels on the center of the clusters
-text(kmeans_pca$centers[,1], kmeans_pca$centers[,2], labels = 1:3, col = "black")
+text(kmeans_pca$centers[, 1], kmeans_pca$centers[, 2], labels = 1:3, col = "black")
 ```
 
 
@@ -303,7 +347,6 @@ avg_dat <- t(avg_dat)
 rownames(avg_dat) <- c("cluster1", "cluster2", "cluster3")
 
 avg_dat
-
 ```
 
 ```{r}
@@ -325,15 +368,14 @@ avg_dat_graph <- gather(avg_dat_graph, variable, value, -cluster)
 ```{r}
 # get the average salary for each cluster
 avg_sal <- linear_dat %>%
-  group_by(kmeans_pca$cluster) %>%
-  summarise(avg_sal = mean(weekly_income))
+    group_by(kmeans_pca$cluster) %>%
+    summarise(avg_sal = mean(weekly_income))
 
 # plot the average salary for each cluster with the colors
 ggplot(avg_dat_graph, aes(x = cluster, y = value, fill = cluster)) +
-  geom_bar(stat = "identity", position = "dodge") +
-      labs(title = "Average Salary for Each Cluster", x = "Cluster", y = "Average Salary") +
+    geom_bar(stat = "identity", position = "dodge") +
+    labs(title = "Average Salary for Each Cluster", x = "Cluster", y = "Average Salary") +
     theme(axis.text.x = element_text(angle = 90, hjust = 1))
-
 ```
 
 ```{r}
@@ -378,9 +420,9 @@ LEPAIN_dat$cluster <- as.factor(LEPAIN_dat$cluster)
 
 # plot adjacent bars for each value for each cluster
 ggplot(LEPAIN_dat, aes(x = LEPAIN, y = Freq, fill = cluster)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  labs(title = "Count of Each Value for LEPAIN for Each Cluster", x = "Cluster", y = "Count") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    geom_bar(stat = "identity", position = "dodge") +
+    labs(title = "Count of Each Value for LEPAIN for Each Cluster", x = "Cluster", y = "Count") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
 ```{r}
@@ -408,9 +450,9 @@ LEPAIN_dat$cluster <- as.factor(LEPAIN_dat$cluster)
 
 # plot the data
 ggplot(LEPAIN_dat, aes(x = LEPAIN, y = percent, fill = cluster)) +
-  geom_bar(stat = "identity", position = "dodge", group = LEPAIN_dat$LEPAIN) +
-  labs(title = "Percentage of Each Value for LEPAIN for Each Cluster", x = "Cluster", y = "Percentage") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    geom_bar(stat = "identity", position = "dodge", group = LEPAIN_dat$LEPAIN) +
+    labs(title = "Percentage of Each Value for LEPAIN for Each Cluster", x = "Cluster", y = "Percentage") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
 #### LRADJ
@@ -441,9 +483,9 @@ LRADJ_dat$cluster <- as.factor(LRADJ_dat$cluster)
 
 # plot adjacent bars for each value for each cluster
 ggplot(LRADJ_dat, aes(x = LRADJ, y = Freq, fill = cluster)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  labs(title = "Count of Each Value for LRADJ for Each Cluster", x = "Cluster", y = "Count") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    geom_bar(stat = "identity", position = "dodge") +
+    labs(title = "Count of Each Value for LRADJ for Each Cluster", x = "Cluster", y = "Count") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
 ```{r}
@@ -471,9 +513,9 @@ LRADJ_dat$cluster <- as.factor(LRADJ_dat$cluster)
 
 # plot the data
 ggplot(LRADJ_dat, aes(x = LRADJ, y = percent, fill = cluster)) +
-  geom_bar(stat = "identity", position = "dodge", group = LRADJ_dat$LRADJ) +
-  labs(title = "Percentage of Each Value for LRADJ for Each Cluster", x = "Cluster", y = "Percentage") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    geom_bar(stat = "identity", position = "dodge", group = LRADJ_dat$LRADJ) +
+    labs(title = "Percentage of Each Value for LRADJ for Each Cluster", x = "Cluster", y = "Percentage") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
 #### LUADDY
@@ -504,9 +546,9 @@ LUADDY_dat$cluster <- as.factor(LUADDY_dat$cluster)
 
 # plot adjacent bars for each value for each cluster
 ggplot(LUADDY_dat, aes(x = LUADDY, y = Freq, fill = cluster)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  labs(title = "Count of Each Value for LUADDY for Each Cluster", x = "Cluster", y = "Count") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    geom_bar(stat = "identity", position = "dodge") +
+    labs(title = "Count of Each Value for LUADDY for Each Cluster", x = "Cluster", y = "Count") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
 ```{r}
@@ -534,9 +576,9 @@ LUADDY_dat$cluster <- as.factor(LUADDY_dat$cluster)
 
 # plot the data
 ggplot(LUADDY_dat, aes(x = LUADDY, y = percent, fill = cluster)) +
-  geom_bar(stat = "identity", position = "dodge", group = LUADDY_dat$LUADDY) +
-  labs(title = "Percentage of Each Value for LUADDY for Each Cluster", x = "Cluster", y = "Percentage") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    geom_bar(stat = "identity", position = "dodge", group = LUADDY_dat$LUADDY) +
+    labs(title = "Percentage of Each Value for LUADDY for Each Cluster", x = "Cluster", y = "Percentage") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
 #### LULVHRS
@@ -554,9 +596,9 @@ LULVHRS_2 <- mutate(LULVHRS_2, cluster = 2)
 LULVHRS_3 <- mutate(LULVHRS_3, cluster = 3)
 
 # Removing all negative values
-LULVHRS_1 <- LULVHRS_1[-c(1:2),]
-LULVHRS_2 <- LULVHRS_2[-c(1:2),]
-LULVHRS_3 <- LULVHRS_3[-c(1:2),]
+LULVHRS_1 <- LULVHRS_1[-c(1:2), ]
+LULVHRS_2 <- LULVHRS_2[-c(1:2), ]
+LULVHRS_3 <- LULVHRS_3[-c(1:2), ]
 
 # rename the columns
 LULVHRS_1 <- rename(LULVHRS_1, LULVHRS = Var1, Freq = Freq)
@@ -572,9 +614,9 @@ LULVHRS_dat$cluster <- as.factor(LULVHRS_dat$cluster)
 
 # plot adjacent bars for each value for each cluster
 ggplot(LULVHRS_dat, aes(x = LULVHRS, y = Freq, fill = cluster)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  labs(title = "Count of Each Value for LULVHRS for Each Cluster", x = "Cluster", y = "Count") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    geom_bar(stat = "identity", position = "dodge") +
+    labs(title = "Count of Each Value for LULVHRS for Each Cluster", x = "Cluster", y = "Count") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
 ```{r}
@@ -602,9 +644,9 @@ LULVHRS_dat$cluster <- as.factor(LULVHRS_dat$cluster)
 
 # plot the data
 ggplot(LULVHRS_dat, aes(x = LULVHRS, y = percent, fill = cluster)) +
-  geom_bar(stat = "identity", position = "dodge", group = LULVHRS_dat$LULVHRS) +
-  labs(title = "Percentage of Each Value for LULVHRS for Each Cluster", x = "Cluster", y = "Percentage") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    geom_bar(stat = "identity", position = "dodge", group = LULVHRS_dat$LULVHRS) +
+    labs(title = "Percentage of Each Value for LULVHRS for Each Cluster", x = "Cluster", y = "Percentage") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 #### 
 
@@ -614,7 +656,7 @@ ggplot(LULVHRS_dat, aes(x = LULVHRS, y = percent, fill = cluster)) +
 set.seed(0)
 
 # pull columns from survey data
-temp <- surveyq_dat %>% select(-yrs_of_collegecred,-how_hs_diploma, -missed_work, -left_last_job, -active_duty)
+temp <- surveyq_dat %>% select(-yrs_of_collegecred, -how_hs_diploma, -missed_work, -left_last_job, -active_duty)
 
 # remove duplicates
 temp <- temp[!duplicated(temp), ]
@@ -625,18 +667,18 @@ print("temp size:")
 dim(temp)
 
 # grab only rows containing Full and Part Time Individuals
-logreg_dat = temp[temp$employment_level=="(1) Full time"|temp$employment_level=="(2) Part time",]
+logreg_dat <- temp[temp$employment_level == "(1) Full time" | temp$employment_level == "(2) Part time", ]
 
 # cleaning log reg data before modeling
-logreg_dat$employment_level = factor(logreg_dat$employment_level)
-logreg_dat <- logreg_dat[!duplicated(logreg_dat),]
-cols = c("memory_issues","dressing_issues","hearing_issues","eye_issues","issues_errands","issues_walking")
+logreg_dat$employment_level <- factor(logreg_dat$employment_level)
+logreg_dat <- logreg_dat[!duplicated(logreg_dat), ]
+cols <- c("memory_issues", "dressing_issues", "hearing_issues", "eye_issues", "issues_errands", "issues_walking")
 
-logreg_dat <- logreg_dat[logreg_dat[cols]!="(-1) Blank",] 
-logreg_dat <- logreg_dat[logreg_dat$unionized!="(-1) Blank",]
+logreg_dat <- logreg_dat[logreg_dat[cols] != "(-1) Blank", ]
+logreg_dat <- logreg_dat[logreg_dat$unionized != "(-1) Blank", ]
 
-logreg_dat = logreg_dat %>% select(-(T010101:T189999),-weekly_income)
-logreg_dat <- logreg_dat[!duplicated(logreg_dat),]
+logreg_dat <- logreg_dat %>% select(-(T010101:T189999), -weekly_income)
+logreg_dat <- logreg_dat[!duplicated(logreg_dat), ]
 ```
 
 ### Testing/Training Data
@@ -647,27 +689,29 @@ train_samp <- sample(1:summ_rows, summ_rows * .8)
 train <- logreg_dat[train_samp, ] %>% select(-id)
 test <- logreg_dat[-train_samp, ] %>% select(-id)
 
-print("train size");dim(train)
-print("test size");dim(test)
+print("train size")
+dim(train)
+print("test size")
+dim(test)
 unique(logreg_dat$employment_level)
 ```
 ### GLM Model
 ```{r logreg model}
-logreg <- glm(formula=employment_level~., data = train, family = "binomial")
+logreg <- glm(formula = employment_level ~ ., data = train, family = "binomial")
 
-test_pred = predict(logreg, test[,-6],type = "response")
-test_pred = ifelse(test_pred>.5,2,1)
-actual = test$employment_level
-confmat = table(test_pred,actual)
+test_pred <- predict(logreg, test[, -6], type = "response")
+test_pred <- ifelse(test_pred > .5, 2, 1)
+actual <- test$employment_level
+confmat <- table(test_pred, actual)
 confmat
-log_acc = sum(diag(confmat))/sum(confmat)
+log_acc <- sum(diag(confmat)) / sum(confmat)
 log_acc
 
-full_time_misclass = confmat[2,1]/sum(confmat[,1])
-print(paste("Full Time Error Rate:",full_time_misclass))
-part_time_misclass = confmat[1,2]/sum(confmat[,2])
-print(paste("Part Time Error Rate:",part_time_misclass))
-print(paste("prop of full time in test:",sum(test$employment_level=="(1) Full time")/nrow(test)))
+full_time_misclass <- confmat[2, 1] / sum(confmat[, 1])
+print(paste("Full Time Error Rate:", full_time_misclass))
+part_time_misclass <- confmat[1, 2] / sum(confmat[, 2])
+print(paste("Part Time Error Rate:", part_time_misclass))
+print(paste("prop of full time in test:", sum(test$employment_level == "(1) Full time") / nrow(test)))
 ```
 
 ```{r}
@@ -675,30 +719,29 @@ plot(logreg)
 ```
 
 ```{r}
-test_pred = predict(logreg, test[,-6],type = "response")
-test_pred = ifelse(test_pred>.3,2,1)
-confmat = table(test_pred,actual)
+test_pred <- predict(logreg, test[, -6], type = "response")
+test_pred <- ifelse(test_pred > .3, 2, 1)
+confmat <- table(test_pred, actual)
 confmat
-log_acc = sum(diag(confmat))/sum(confmat)
+log_acc <- sum(diag(confmat)) / sum(confmat)
 log_acc
 
-full_time_misclass = confmat[2,1]/sum(confmat[,1])
-print(paste("Full Time Error Rate:",full_time_misclass))
-part_time_misclass = confmat[1,2]/sum(confmat[,2])
-print(paste("Part Time Error Rate:",part_time_misclass))
-#print(paste("prop of full time in test:",sum(test$employment_level=="(1) Full time")/nrow(test)))
+full_time_misclass <- confmat[2, 1] / sum(confmat[, 1])
+print(paste("Full Time Error Rate:", full_time_misclass))
+part_time_misclass <- confmat[1, 2] / sum(confmat[, 2])
+print(paste("Part Time Error Rate:", part_time_misclass))
+# print(paste("prop of full time in test:",sum(test$employment_level=="(1) Full time")/nrow(test)))
 ```
 
 
 ```{r}
-xtrain = as.matrix(train[,-6])
-xtest = as.matrix(test[,-6])
-ytrain = as.matrix(train[,6])
-ytest = as.matrix(test[,6])
-ridge_reg = glmnet(xtrain, ytrain,  alpha = 1)
+xtrain <- as.matrix(train[, -6])
+xtest <- as.matrix(test[, -6])
+ytrain <- as.matrix(train[, 6])
+ytest <- as.matrix(test[, 6])
+ridge_reg <- glmnet(xtrain, ytrain, alpha = 1)
 
-confusion.glmnet(ridge_reg,xtest,family = "binomial")
-
+confusion.glmnet(ridge_reg, xtest, family = "binomial")
 ```
 
 
@@ -779,8 +822,10 @@ sampl_max <- max(rfr_sample$weekly_income, rfr_sample$pred) * 1.025
 ggplot(rfr_sample, aes(x = weekly_income, y = pred)) +
     geom_point() +
     geom_abline(intercept = 0, slope = 1, color = "red") +
-    labs(title = "QQ - Predicted Weekly Income vs Actual Weekly Income", 
-         x = "Actual Weekly Income", y = "Predicted Weekly Income") +
+    labs(
+        title = "QQ - Predicted Weekly Income vs Actual Weekly Income",
+        x = "Actual Weekly Income", y = "Predicted Weekly Income"
+    ) +
     xlim(c(0, sampl_max)) +
     ylim(c(0, sampl_max))
 ```
@@ -790,8 +835,10 @@ ggplot(rfr_sample, aes(x = weekly_income, y = pred)) +
 ```{r}
 # Using same training and testing data sets as random forest regression
 # Creating the lasso random forest classifer with ranger
-lasso_model <- ranger(weekly_income ~ ., data = rfr_train, num.trees = 500, 
-                      importance = "impurity", verbose = TRUE)
+lasso_model <- ranger(weekly_income ~ .,
+    data = rfr_train, num.trees = 500,
+    importance = "impurity", verbose = TRUE
+)
 ```
 
 ```{r}
@@ -830,12 +877,14 @@ lasso_importance
 ```
 
 ```{r}
-lasso_importance_25 = lasso_importance[1:20, ]
+lasso_importance_25 <- lasso_importance[1:20, ]
 # plotting the importance of each variable
 ggplot(lasso_importance_25, aes(x = reorder(feature, importance), y = importance)) +
     geom_bar(stat = "identity") +
-    labs(title = "Lasso - Importance of Each Variable", 
-         x = "Variable", y = "Importance") +
+    labs(
+        title = "Lasso - Importance of Each Variable",
+        x = "Variable", y = "Importance"
+    ) +
     theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
