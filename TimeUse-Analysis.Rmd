@@ -59,7 +59,9 @@ summary_dat <- summary_dat_orig %>%
 surveyq_dat <- surveyq_dat_orig %>%
     select(
         TUCASEID, HEHOUSUT, HETENURE, HRNUMHOU, 
-        PEABSRSN, PECYC, PEJHRSN, PEDIPGED
+        PEABSRSN, PECYC, PEJHRSN, PEDIPGED, PEAFEVER,
+        PEDISREM, PEDISDRS, PEDISEAR, PEDISEYE, PEDISOUT,
+        PEDISPHY, PEERNLAB
     )
 
 linear_dat <- linear_dat_orig %>%
@@ -121,7 +123,15 @@ surveyq_dat <- surveyq_dat %>%
         "missed_work" = "PEABSRSN",
         "yrs_of_collegecred" = "PECYC",
         "how_hs_diploma" = "PEDIPGED",
-        "left_last_job" = "PEJHRSN"
+        "left_last_job" = "PEJHRSN",
+        "active_duty" = "PEAFEVER",
+        "memory_issues" = "PEDISREM",
+        "dressing_issues" = "PEDISDRS",
+        "hearing_issues" = "PEDISEAR",
+        "eye_issues" = "PEDISEYE",
+        "issues_errands" = "PEDISOUT",
+        "issues_walking" = "PEDISPHY",
+        "unionized" = "PEERNLAB"
     )
 head(surveyq_dat)
 
@@ -608,24 +618,42 @@ ggplot(LULVHRS_dat, aes(x = LULVHRS, y = percent, fill = cluster)) +
 ```{r glm setup}
 set.seed(0)
 
-# combine data
-temp <- surveyq_dat %>% select(id, type_of_housing, ownership_of_home, num_in_household)
+# pull columns from survey data
+temp <- surveyq_dat %>% select(-yrs_of_collegecred,-how_hs_diploma, -missed_work, -left_last_job, -active_duty)
+
+# remove duplicates
 temp <- temp[!duplicated(temp), ]
+
+# join data with summary data
 temp <- left_join(summary_dat, temp, by = "id")
+print("temp size:")
 dim(temp)
+
 # grab only rows containing Full and Part Time Individuals
 logreg_dat = temp[temp$employment_level=="(1) Full time"|temp$employment_level=="(2) Part time",]
-logreg_dat = logreg_dat %>% select(-(T010101:T189999))
-logreg_dat$employment_level = factor(logreg_dat$employment_level)
 
+# cleaning log reg data before modeling
+logreg_dat$employment_level = factor(logreg_dat$employment_level)
+logreg_dat <- logreg_dat[!duplicated(logreg_dat),]
+cols = c("memory_issues","dressing_issues","hearing_issues","eye_issues","issues_errands","issues_walking")
+
+logreg_dat <- logreg_dat[logreg_dat[cols]!="(-1) Blank",] 
+logreg_dat <- logreg_dat[logreg_dat$unionized!="(-1) Blank",]
+
+logreg_dat = logreg_dat %>% select(-(T010101:T189999),-weekly_income)
+logreg_dat <- logreg_dat[!duplicated(logreg_dat),]
+```
+
+### Testing/Training Data
+```{r glm testing training}
 # training/testing data
-summ_rows <- nrow(summary_dat)
+summ_rows <- nrow(logreg_dat)
 train_samp <- sample(1:summ_rows, summ_rows * .8)
 train <- logreg_dat[train_samp, ] %>% select(-id)
 test <- logreg_dat[-train_samp, ] %>% select(-id)
 
-dim(train)
-dim(test)
+print("train size");dim(train)
+print("test size");dim(test)
 unique(logreg_dat$employment_level)
 ```
 ### GLM Model
@@ -637,9 +665,11 @@ logreg <- glm(formula=employment_level~., data = train, family = "binomial")
 ```{r}
 summary(logreg)
 ```
+
 ```{r}
 test_pred = predict(logreg, test)
 actual = test$employment_level
+table(test_pred,actual)
 ```
 
 
