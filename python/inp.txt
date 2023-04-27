@@ -31,7 +31,7 @@ ggplot(xyz_dat, aes(x = xyz, y = Freq, fill = cluster)) +
 ```
 
 ```{r}
-# plotting the percentage of each value for lepain for each cluster
+# plotting the percentage of each value for xyz for each cluster
 # get the total number of rows for each cluster
 xyz_total_1 <- nrow(cluster_1_rows)
 xyz_total_2 <- nrow(cluster_2_rows)

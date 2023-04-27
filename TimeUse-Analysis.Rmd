@@ -447,7 +447,7 @@ ggplot(LRADJ_dat, aes(x = LRADJ, y = Freq, fill = cluster)) +
 ```
 
 ```{r}
-# plotting the percentage of each value for lepain for each cluster
+# plotting the percentage of each value for LRADJ for each cluster
 # get the total number of rows for each cluster
 LRADJ_total_1 <- nrow(cluster_1_rows)
 LRADJ_total_2 <- nrow(cluster_2_rows)
@@ -510,7 +510,7 @@ ggplot(LUADDY_dat, aes(x = LUADDY, y = Freq, fill = cluster)) +
 ```
 
 ```{r}
-# plotting the percentage of each value for lepain for each cluster
+# plotting the percentage of each value for LUADDY for each cluster
 # get the total number of rows for each cluster
 LUADDY_total_1 <- nrow(cluster_1_rows)
 LUADDY_total_2 <- nrow(cluster_2_rows)
@@ -578,7 +578,7 @@ ggplot(LULVHRS_dat, aes(x = LULVHRS, y = Freq, fill = cluster)) +
 ```
 
 ```{r}
-# plotting the percentage of each value for lepain for each cluster
+# plotting the percentage of each value for LULVHRS for each cluster
 # get the total number of rows for each cluster
 LULVHRS_total_1 <- nrow(cluster_1_rows)
 LULVHRS_total_2 <- nrow(cluster_2_rows)
