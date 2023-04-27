@@ -1,6 +1,6 @@
 # take in inp.txt and replace all "xyz" with the val below
 
-val = "LULVHRS"
+val = "LUPDEC"
 
 with open("inp.txt", "r") as f:
     lines = f.readlines()
@@ -8,4 +8,3 @@ with open("inp.txt", "r") as f:
 with open("out.txt", "w") as f:
     for line in lines:
         f.write(line.replace("xyz", val))
-

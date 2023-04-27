@@ -1,61 +1,59 @@
 ```{r}
-LULVHRS_vals <- unique(linear_dat$LULVHRS)
+LUPDEC_vals <- unique(linear_dat$LUPDEC)
 
 # get the counts for each value for each cluster
-LULVHRS_1 <- data.frame(table(cluster_1_rows$LULVHRS))
-LULVHRS_2 <- data.frame(table(cluster_2_rows$LULVHRS))
-LULVHRS_3 <- data.frame(table(cluster_3_rows$LULVHRS))
+LUPDEC_1 <- data.frame(table(cluster_1_rows$LUPDEC))
+LUPDEC_2 <- data.frame(table(cluster_2_rows$LUPDEC))
+LUPDEC_3 <- data.frame(table(cluster_3_rows$LUPDEC))
 
 # add the cluster number to each dataframe
-LULVHRS_1 <- mutate(LULVHRS_1, cluster = 1)
-LULVHRS_2 <- mutate(LULVHRS_2, cluster = 2)
-LULVHRS_3 <- mutate(LULVHRS_3, cluster = 3)
+LUPDEC_1 <- mutate(LUPDEC_1, cluster = 1)
+LUPDEC_2 <- mutate(LUPDEC_2, cluster = 2)
+LUPDEC_3 <- mutate(LUPDEC_3, cluster = 3)
 
 # rename the columns
-LULVHRS_1 <- rename(LULVHRS_1, LULVHRS = Var1, Freq = Freq)
-LULVHRS_2 <- rename(LULVHRS_2, LULVHRS = Var1, Freq = Freq)
-LULVHRS_3 <- rename(LULVHRS_3, LULVHRS = Var1, Freq = Freq)
+LUPDEC_1 <- rename(LUPDEC_1, LUPDEC = Var1, Freq = Freq)
+LUPDEC_2 <- rename(LUPDEC_2, LUPDEC = Var1, Freq = Freq)
+LUPDEC_3 <- rename(LUPDEC_3, LUPDEC = Var1, Freq = Freq)
 
 # merge the dataframes
-LULVHRS_dat <- rbind(LULVHRS_1, LULVHRS_2, LULVHRS_3)
-LULVHRS_dat
+LUPDEC_dat <- rbind(LUPDEC_1, LUPDEC_2, LUPDEC_3)
+LUPDEC_dat
 
 # change cluster to factor
-LULVHRS_dat$cluster <- as.factor(LULVHRS_dat$cluster)
+LUPDEC_dat$cluster <- as.factor(LUPDEC_dat$cluster)
 
 # plot adjacent bars for each value for each cluster
-ggplot(LULVHRS_dat, aes(x = LULVHRS, y = Freq, fill = cluster)) +
+ggplot(LUPDEC_dat, aes(x = LUPDEC, y = Freq, fill = cluster)) +
   geom_bar(stat = "identity", position = "dodge") +
-  labs(title = "Count of Each Value for LULVHRS for Each Cluster", x = "Cluster", y = "Count") +
+  labs(title = "Count of Each Value for LUPDEC for Each Cluster", x = "Cluster", y = "Count") +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
-```
 
-```{r}
-# plotting the percentage of each value for lepain for each cluster
+# plotting the percentage of each value for LUPDEC for each cluster
 # get the total number of rows for each cluster
-LULVHRS_total_1 <- nrow(cluster_1_rows)
-LULVHRS_total_2 <- nrow(cluster_2_rows)
-LULVHRS_total_3 <- nrow(cluster_3_rows)
+LUPDEC_total_1 <- nrow(cluster_1_rows)
+LUPDEC_total_2 <- nrow(cluster_2_rows)
+LUPDEC_total_3 <- nrow(cluster_3_rows)
 
 # get the percentage of each value for each cluster
-LULVHRS_1 <- mutate(LULVHRS_1, percent = Freq / LULVHRS_total_1)
-LULVHRS_2 <- mutate(LULVHRS_2, percent = Freq / LULVHRS_total_2)
-LULVHRS_3 <- mutate(LULVHRS_3, percent = Freq / LULVHRS_total_3)
+LUPDEC_1 <- mutate(LUPDEC_1, percent = Freq / LUPDEC_total_1)
+LUPDEC_2 <- mutate(LUPDEC_2, percent = Freq / LUPDEC_total_2)
+LUPDEC_3 <- mutate(LUPDEC_3, percent = Freq / LUPDEC_total_3)
 
 # printing the values to make sure they equal 1
-sum(LULVHRS_1$percent)
-sum(LULVHRS_2$percent)
-sum(LULVHRS_3$percent)
+sum(LUPDEC_1$percent)
+sum(LUPDEC_2$percent)
+sum(LUPDEC_3$percent)
 
 # merge the dataframes
-LULVHRS_dat <- rbind(LULVHRS_1, LULVHRS_2, LULVHRS_3)
+LUPDEC_dat <- rbind(LUPDEC_1, LUPDEC_2, LUPDEC_3)
 
 # change cluster to factor
-LULVHRS_dat$cluster <- as.factor(LULVHRS_dat$cluster)
+LUPDEC_dat$cluster <- as.factor(LUPDEC_dat$cluster)
 
 # plot the data
-ggplot(LULVHRS_dat, aes(x = LULVHRS, y = percent, fill = cluster)) +
-  geom_bar(stat = "identity", position = "dodge", group = LULVHRS_dat$LULVHRS) +
-  labs(title = "Percentage of Each Value for LULVHRS for Each Cluster", x = "Cluster", y = "Percentage") +
+ggplot(LUPDEC_dat, aes(x = LUPDEC, y = percent, fill = cluster)) +
+  geom_bar(stat = "identity", position = "dodge", group = LUPDEC_dat$LUPDEC) +
+  labs(title = "Percentage of Each Value for LUPDEC for Each Cluster", x = "Cluster", y = "Percentage") +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```

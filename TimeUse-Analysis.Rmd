@@ -23,6 +23,8 @@ library(glmnet)
 library(ranger)
 library(corrplot)
 library(car)
+library(pROC)
+library(dbscan)
 
 # activity_dat contains the data/features regarding the
 # activities respondents did throughout the week as well
@@ -210,7 +212,6 @@ head(linear_dat)
 # for (i in 1:ncol(linear_dat)) {
 #     print(unique(linear_dat[, i]))
 # }
-
 ```
 
 ```{r linear train test}
@@ -249,20 +250,20 @@ summary(lm1)
 ```{r echo = FALSE results = hide}
 # Using stepwise variable selection to make a more interpretable model
 # This steps both forwads and back
-step_lm1 <- step(lm1, direction = "both");
+step_lm1 <- step(lm1, direction = "both")
 plot(step_lm1)
 ```
 
 ```{r}
 plot(step_lm1$anova$AIC, xlab = "Number of variables", ylab = "AIC")
-lin_train_dat[575,]
+lin_train_dat[575, ]
 ```
 
 ```{r}
 step_lm1
 # This is the best model according to AIC
-lm2 <- lm(weekly_income ~ LUADDY + LUADHR + LUADLOC + LUPAID + 
-    LUPDBRTH + LUPDFMIL + LUPDOIL + LUPTO + LUPTOHOL + LUPTOSCK + 
+lm2 <- lm(weekly_income ~ LUADDY + LUADHR + LUADLOC + LUPAID +
+    LUPDBRTH + LUPDFMIL + LUPDOIL + LUPTO + LUPTOHOL + LUPTOSCK +
     LUPTSCK + LUPTVAC, data = lin_train_dat)
 ```
 
@@ -283,14 +284,38 @@ sqrt(mse)
 # turn all data into numeric
 lin_pca <- as.data.frame(lapply(linear_dat, as.numeric))
 head(lin_pca)
+```
+
+```{r}
+# standardize the data
+set.seed(1)
+lin_pca <- scale(lin_pca)
+```
+
+```{r}
 # run pca over linear_dat to 2 dimensions
+set.seed(1)
 pca <- prcomp(lin_pca, scale = TRUE)
 summary(pca)
 ```
 
 ```{r}
-# graphing cumulative variance
-plot(pca, type = "l")
+variance_prop <- pca$sdev^2 / sum(pca$sdev^2)
+cumulative_prop <- cumsum(variance_prop)
+plot_data <- data.frame(
+    PC = 1:length(variance_prop),
+    Cumulative_prop = cumulative_prop
+)
+
+ggplot(plot_data, aes(x = PC, y = Cumulative_prop)) +
+    geom_line() +
+    geom_point() +
+    scale_x_continuous("Principal Component") +
+    scale_y_continuous("Cumulative Proportion of Variance Explained",
+        limits = c(0, 1)
+    ) +
+    theme_minimal() +
+    geom_vline(xintercept = 7, linetype = "dashed")
 ```
 
 ```{r}
@@ -298,11 +323,51 @@ plot(pca, type = "l")
 plot(pca$x[, 1], pca$x[, 2])
 ```
 
+```{r}
+# finding the most important features
+
+# getting the loadings
+loadings <- pca$rotation
+# getting the absolute value of the loadings
+loadings <- abs(loadings)
+# getting the sum of the absolute value of the loadings
+loadings <- apply(loadings, 1, sum)
+# getting the names of the features
+loadings <- data.frame(
+    feature = names(loadings),
+    loadings = loadings
+)
+
+# sorting the loadings
+loadings <- loadings[order(-loadings$loadings), ]
+loadings
+head(loadings)
+```
+
 ### Cluster Analysis on PCA
 ```{r}
 # run cluster analysis on pca
-set.seed(74)
-kmeans_pca <- kmeans(pca$x, centers = 3)
+best_seed <- 0
+best_kmeans_pca <- NULL
+# running a for loop over different set seeds to find the best
+
+for (i in 1:100) {
+    set.seed(i)
+    kmeans_pca <- kmeans(pca$x[, 1:2], centers = 3)
+    if (i == 1) {
+        best_kmeans_pca <- kmeans_pca
+        best_seed <- i
+    } else if (kmeans_pca$tot.withinss < best_kmeans_pca$tot.withinss) {
+        best_kmeans_pca <- kmeans_pca
+        best_seed <- i
+    }
+}
+best_seed
+```
+
+```{r}
+set.seed(best_seed)
+kmeans_pca <- kmeans(pca$x[, 1:2], centers = 3)
 kmeans_pca
 ```
 
@@ -392,70 +457,371 @@ cluster_3_rows <- linear_dat[kmeans_pca$cluster == 3, ]
 
 linear_dat
 ```
-#### LEPAIN
+
+#### Top 5 Most Important Features from the PCA
+##### LUUNEVR
 ```{r}
-LEPAIN_vals <- unique(linear_dat$LEPAIN)
+LUUNEVR_vals <- unique(linear_dat$LUUNEVR)
 
 # get the counts for each value for each cluster
-LEPAIN_1 <- data.frame(table(cluster_1_rows$LEPAIN))
-LEPAIN_2 <- data.frame(table(cluster_2_rows$LEPAIN))
-LEPAIN_3 <- data.frame(table(cluster_3_rows$LEPAIN))
+LUUNEVR_1 <- data.frame(table(cluster_1_rows$LUUNEVR))
+LUUNEVR_2 <- data.frame(table(cluster_2_rows$LUUNEVR))
+LUUNEVR_3 <- data.frame(table(cluster_3_rows$LUUNEVR))
 
 # add the cluster number to each dataframe
-LEPAIN_1 <- mutate(LEPAIN_1, cluster = 1)
-LEPAIN_2 <- mutate(LEPAIN_2, cluster = 2)
-LEPAIN_3 <- mutate(LEPAIN_3, cluster = 3)
+LUUNEVR_1 <- mutate(LUUNEVR_1, cluster = 1)
+LUUNEVR_2 <- mutate(LUUNEVR_2, cluster = 2)
+LUUNEVR_3 <- mutate(LUUNEVR_3, cluster = 3)
 
 # rename the columns
-LEPAIN_1 <- rename(LEPAIN_1, LEPAIN = Var1, Freq = Freq)
-LEPAIN_2 <- rename(LEPAIN_2, LEPAIN = Var1, Freq = Freq)
-LEPAIN_3 <- rename(LEPAIN_3, LEPAIN = Var1, Freq = Freq)
+LUUNEVR_1 <- rename(LUUNEVR_1, LUUNEVR = Var1, Freq = Freq)
+LUUNEVR_2 <- rename(LUUNEVR_2, LUUNEVR = Var1, Freq = Freq)
+LUUNEVR_3 <- rename(LUUNEVR_3, LUUNEVR = Var1, Freq = Freq)
 
 # merge the dataframes
-LEPAIN_dat <- rbind(LEPAIN_1, LEPAIN_2, LEPAIN_3)
-LEPAIN_dat
+LUUNEVR_dat <- rbind(LUUNEVR_1, LUUNEVR_2, LUUNEVR_3)
+LUUNEVR_dat
 
 # change cluster to factor
-LEPAIN_dat$cluster <- as.factor(LEPAIN_dat$cluster)
+LUUNEVR_dat$cluster <- as.factor(LUUNEVR_dat$cluster)
 
 # plot adjacent bars for each value for each cluster
-ggplot(LEPAIN_dat, aes(x = LEPAIN, y = Freq, fill = cluster)) +
-    geom_bar(stat = "identity", position = "dodge") +
-    labs(title = "Count of Each Value for LEPAIN for Each Cluster", x = "Cluster", y = "Count") +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1))
-```
+ggplot(LUUNEVR_dat, aes(x = LUUNEVR, y = Freq, fill = cluster)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Count of Each Value for LUUNEVR for Each Cluster", x = "Cluster", y = "Count") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
-```{r}
-# plotting the percentage of each value for lepain for each cluster
+# plotting the percentage of each value for LUUNEVR for each cluster
 # get the total number of rows for each cluster
-LEPAIN_total_1 <- nrow(cluster_1_rows)
-LEPAIN_total_2 <- nrow(cluster_2_rows)
-LEPAIN_total_3 <- nrow(cluster_3_rows)
+LUUNEVR_total_1 <- nrow(cluster_1_rows)
+LUUNEVR_total_2 <- nrow(cluster_2_rows)
+LUUNEVR_total_3 <- nrow(cluster_3_rows)
 
 # get the percentage of each value for each cluster
-LEPAIN_1 <- mutate(LEPAIN_1, percent = Freq / LEPAIN_total_1)
-LEPAIN_2 <- mutate(LEPAIN_2, percent = Freq / LEPAIN_total_2)
-LEPAIN_3 <- mutate(LEPAIN_3, percent = Freq / LEPAIN_total_3)
+LUUNEVR_1 <- mutate(LUUNEVR_1, percent = Freq / LUUNEVR_total_1)
+LUUNEVR_2 <- mutate(LUUNEVR_2, percent = Freq / LUUNEVR_total_2)
+LUUNEVR_3 <- mutate(LUUNEVR_3, percent = Freq / LUUNEVR_total_3)
 
 # printing the values to make sure they equal 1
-sum(LEPAIN_1$percent)
-sum(LEPAIN_2$percent)
-sum(LEPAIN_3$percent)
+sum(LUUNEVR_1$percent)
+sum(LUUNEVR_2$percent)
+sum(LUUNEVR_3$percent)
 
 # merge the dataframes
-LEPAIN_dat <- rbind(LEPAIN_1, LEPAIN_2, LEPAIN_3)
+LUUNEVR_dat <- rbind(LUUNEVR_1, LUUNEVR_2, LUUNEVR_3)
 
 # change cluster to factor
-LEPAIN_dat$cluster <- as.factor(LEPAIN_dat$cluster)
+LUUNEVR_dat$cluster <- as.factor(LUUNEVR_dat$cluster)
 
 # plot the data
-ggplot(LEPAIN_dat, aes(x = LEPAIN, y = percent, fill = cluster)) +
-    geom_bar(stat = "identity", position = "dodge", group = LEPAIN_dat$LEPAIN) +
-    labs(title = "Percentage of Each Value for LEPAIN for Each Cluster", x = "Cluster", y = "Percentage") +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(LUUNEVR_dat, aes(x = LUUNEVR, y = percent, fill = cluster)) +
+  geom_bar(stat = "identity", position = "dodge", group = LUUNEVR_dat$LUUNEVR) +
+  labs(title = "Percentage of Each Value for LUUNEVR for Each Cluster", x = "Cluster", y = "Percentage") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+##### LUPTOHOL
+```{r}
+LUPTOHOL_vals <- unique(linear_dat$LUPTOHOL)
+
+# get the counts for each value for each cluster
+LUPTOHOL_1 <- data.frame(table(cluster_1_rows$LUPTOHOL))
+LUPTOHOL_2 <- data.frame(table(cluster_2_rows$LUPTOHOL))
+LUPTOHOL_3 <- data.frame(table(cluster_3_rows$LUPTOHOL))
+
+# add the cluster number to each dataframe
+LUPTOHOL_1 <- mutate(LUPTOHOL_1, cluster = 1)
+LUPTOHOL_2 <- mutate(LUPTOHOL_2, cluster = 2)
+LUPTOHOL_3 <- mutate(LUPTOHOL_3, cluster = 3)
+
+# rename the columns
+LUPTOHOL_1 <- rename(LUPTOHOL_1, LUPTOHOL = Var1, Freq = Freq)
+LUPTOHOL_2 <- rename(LUPTOHOL_2, LUPTOHOL = Var1, Freq = Freq)
+LUPTOHOL_3 <- rename(LUPTOHOL_3, LUPTOHOL = Var1, Freq = Freq)
+
+# merge the dataframes
+LUPTOHOL_dat <- rbind(LUPTOHOL_1, LUPTOHOL_2, LUPTOHOL_3)
+LUPTOHOL_dat
+
+# change cluster to factor
+LUPTOHOL_dat$cluster <- as.factor(LUPTOHOL_dat$cluster)
+
+# plot adjacent bars for each value for each cluster
+ggplot(LUPTOHOL_dat, aes(x = LUPTOHOL, y = Freq, fill = cluster)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Count of Each Value for LUPTOHOL for Each Cluster", x = "Cluster", y = "Count") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+# plotting the percentage of each value for LUPTOHOL for each cluster
+# get the total number of rows for each cluster
+LUPTOHOL_total_1 <- nrow(cluster_1_rows)
+LUPTOHOL_total_2 <- nrow(cluster_2_rows)
+LUPTOHOL_total_3 <- nrow(cluster_3_rows)
+
+# get the percentage of each value for each cluster
+LUPTOHOL_1 <- mutate(LUPTOHOL_1, percent = Freq / LUPTOHOL_total_1)
+LUPTOHOL_2 <- mutate(LUPTOHOL_2, percent = Freq / LUPTOHOL_total_2)
+LUPTOHOL_3 <- mutate(LUPTOHOL_3, percent = Freq / LUPTOHOL_total_3)
+
+# printing the values to make sure they equal 1
+sum(LUPTOHOL_1$percent)
+sum(LUPTOHOL_2$percent)
+sum(LUPTOHOL_3$percent)
+
+# merge the dataframes
+LUPTOHOL_dat <- rbind(LUPTOHOL_1, LUPTOHOL_2, LUPTOHOL_3)
+
+# change cluster to factor
+LUPTOHOL_dat$cluster <- as.factor(LUPTOHOL_dat$cluster)
+
+# plot the data
+ggplot(LUPTOHOL_dat, aes(x = LUPTOHOL, y = percent, fill = cluster)) +
+  geom_bar(stat = "identity", position = "dodge", group = LUPTOHOL_dat$LUPTOHOL) +
+  labs(title = "Percentage of Each Value for LUPTOHOL for Each Cluster", x = "Cluster", y = "Percentage") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+##### LUPAID
+```{r}
+LUPAID_vals <- unique(linear_dat$LUPAID)
+
+# get the counts for each value for each cluster
+LUPAID_1 <- data.frame(table(cluster_1_rows$LUPAID))
+LUPAID_2 <- data.frame(table(cluster_2_rows$LUPAID))
+LUPAID_3 <- data.frame(table(cluster_3_rows$LUPAID))
+
+# add the cluster number to each dataframe
+LUPAID_1 <- mutate(LUPAID_1, cluster = 1)
+LUPAID_2 <- mutate(LUPAID_2, cluster = 2)
+LUPAID_3 <- mutate(LUPAID_3, cluster = 3)
+
+# rename the columns
+LUPAID_1 <- rename(LUPAID_1, LUPAID = Var1, Freq = Freq)
+LUPAID_2 <- rename(LUPAID_2, LUPAID = Var1, Freq = Freq)
+LUPAID_3 <- rename(LUPAID_3, LUPAID = Var1, Freq = Freq)
+
+# merge the dataframes
+LUPAID_dat <- rbind(LUPAID_1, LUPAID_2, LUPAID_3)
+LUPAID_dat
+
+# change cluster to factor
+LUPAID_dat$cluster <- as.factor(LUPAID_dat$cluster)
+
+# plot adjacent bars for each value for each cluster
+ggplot(LUPAID_dat, aes(x = LUPAID, y = Freq, fill = cluster)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Count of Each Value for LUPAID for Each Cluster", x = "Cluster", y = "Count") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+# plotting the percentage of each value for LUPAID for each cluster
+# get the total number of rows for each cluster
+LUPAID_total_1 <- nrow(cluster_1_rows)
+LUPAID_total_2 <- nrow(cluster_2_rows)
+LUPAID_total_3 <- nrow(cluster_3_rows)
+
+# get the percentage of each value for each cluster
+LUPAID_1 <- mutate(LUPAID_1, percent = Freq / LUPAID_total_1)
+LUPAID_2 <- mutate(LUPAID_2, percent = Freq / LUPAID_total_2)
+LUPAID_3 <- mutate(LUPAID_3, percent = Freq / LUPAID_total_3)
+
+# printing the values to make sure they equal 1
+sum(LUPAID_1$percent)
+sum(LUPAID_2$percent)
+sum(LUPAID_3$percent)
+
+# merge the dataframes
+LUPAID_dat <- rbind(LUPAID_1, LUPAID_2, LUPAID_3)
+
+# change cluster to factor
+LUPAID_dat$cluster <- as.factor(LUPAID_dat$cluster)
+
+# plot the data
+ggplot(LUPAID_dat, aes(x = LUPAID, y = percent, fill = cluster)) +
+  geom_bar(stat = "identity", position = "dodge", group = LUPAID_dat$LUPAID) +
+  labs(title = "Percentage of Each Value for LUPAID for Each Cluster", x = "Cluster", y = "Percentage") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+##### LUPTSCK
+```{r}
+LUPTSCK_vals <- unique(linear_dat$LUPTSCK)
+
+# get the counts for each value for each cluster
+LUPTSCK_1 <- data.frame(table(cluster_1_rows$LUPTSCK))
+LUPTSCK_2 <- data.frame(table(cluster_2_rows$LUPTSCK))
+LUPTSCK_3 <- data.frame(table(cluster_3_rows$LUPTSCK))
+
+# add the cluster number to each dataframe
+LUPTSCK_1 <- mutate(LUPTSCK_1, cluster = 1)
+LUPTSCK_2 <- mutate(LUPTSCK_2, cluster = 2)
+LUPTSCK_3 <- mutate(LUPTSCK_3, cluster = 3)
+
+# rename the columns
+LUPTSCK_1 <- rename(LUPTSCK_1, LUPTSCK = Var1, Freq = Freq)
+LUPTSCK_2 <- rename(LUPTSCK_2, LUPTSCK = Var1, Freq = Freq)
+LUPTSCK_3 <- rename(LUPTSCK_3, LUPTSCK = Var1, Freq = Freq)
+
+# merge the dataframes
+LUPTSCK_dat <- rbind(LUPTSCK_1, LUPTSCK_2, LUPTSCK_3)
+LUPTSCK_dat
+
+# change cluster to factor
+LUPTSCK_dat$cluster <- as.factor(LUPTSCK_dat$cluster)
+
+# plot adjacent bars for each value for each cluster
+ggplot(LUPTSCK_dat, aes(x = LUPTSCK, y = Freq, fill = cluster)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Count of Each Value for LUPTSCK for Each Cluster", x = "Cluster", y = "Count") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+# plotting the percentage of each value for LUPTSCK for each cluster
+# get the total number of rows for each cluster
+LUPTSCK_total_1 <- nrow(cluster_1_rows)
+LUPTSCK_total_2 <- nrow(cluster_2_rows)
+LUPTSCK_total_3 <- nrow(cluster_3_rows)
+
+# get the percentage of each value for each cluster
+LUPTSCK_1 <- mutate(LUPTSCK_1, percent = Freq / LUPTSCK_total_1)
+LUPTSCK_2 <- mutate(LUPTSCK_2, percent = Freq / LUPTSCK_total_2)
+LUPTSCK_3 <- mutate(LUPTSCK_3, percent = Freq / LUPTSCK_total_3)
+
+# printing the values to make sure they equal 1
+sum(LUPTSCK_1$percent)
+sum(LUPTSCK_2$percent)
+sum(LUPTSCK_3$percent)
+
+# merge the dataframes
+LUPTSCK_dat <- rbind(LUPTSCK_1, LUPTSCK_2, LUPTSCK_3)
+
+# change cluster to factor
+LUPTSCK_dat$cluster <- as.factor(LUPTSCK_dat$cluster)
+
+# plot the data
+ggplot(LUPTSCK_dat, aes(x = LUPTSCK, y = percent, fill = cluster)) +
+  geom_bar(stat = "identity", position = "dodge", group = LUPTSCK_dat$LUPTSCK) +
+  labs(title = "Percentage of Each Value for LUPTSCK for Each Cluster", x = "Cluster", y = "Percentage") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+##### LUUNFMIL
+```{r}
+LUUNFMIL_vals <- unique(linear_dat$LUUNFMIL)
+
+# get the counts for each value for each cluster
+LUUNFMIL_1 <- data.frame(table(cluster_1_rows$LUUNFMIL))
+LUUNFMIL_2 <- data.frame(table(cluster_2_rows$LUUNFMIL))
+LUUNFMIL_3 <- data.frame(table(cluster_3_rows$LUUNFMIL))
+
+# add the cluster number to each dataframe
+LUUNFMIL_1 <- mutate(LUUNFMIL_1, cluster = 1)
+LUUNFMIL_2 <- mutate(LUUNFMIL_2, cluster = 2)
+LUUNFMIL_3 <- mutate(LUUNFMIL_3, cluster = 3)
+
+# rename the columns
+LUUNFMIL_1 <- rename(LUUNFMIL_1, LUUNFMIL = Var1, Freq = Freq)
+LUUNFMIL_2 <- rename(LUUNFMIL_2, LUUNFMIL = Var1, Freq = Freq)
+LUUNFMIL_3 <- rename(LUUNFMIL_3, LUUNFMIL = Var1, Freq = Freq)
+
+# merge the dataframes
+LUUNFMIL_dat <- rbind(LUUNFMIL_1, LUUNFMIL_2, LUUNFMIL_3)
+LUUNFMIL_dat
+
+# change cluster to factor
+LUUNFMIL_dat$cluster <- as.factor(LUUNFMIL_dat$cluster)
+
+# plot adjacent bars for each value for each cluster
+ggplot(LUUNFMIL_dat, aes(x = LUUNFMIL, y = Freq, fill = cluster)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Count of Each Value for LUUNFMIL for Each Cluster", x = "Cluster", y = "Count") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+# plotting the percentage of each value for LUUNFMIL for each cluster
+# get the total number of rows for each cluster
+LUUNFMIL_total_1 <- nrow(cluster_1_rows)
+LUUNFMIL_total_2 <- nrow(cluster_2_rows)
+LUUNFMIL_total_3 <- nrow(cluster_3_rows)
+
+# get the percentage of each value for each cluster
+LUUNFMIL_1 <- mutate(LUUNFMIL_1, percent = Freq / LUUNFMIL_total_1)
+LUUNFMIL_2 <- mutate(LUUNFMIL_2, percent = Freq / LUUNFMIL_total_2)
+LUUNFMIL_3 <- mutate(LUUNFMIL_3, percent = Freq / LUUNFMIL_total_3)
+
+# printing the values to make sure they equal 1
+sum(LUUNFMIL_1$percent)
+sum(LUUNFMIL_2$percent)
+sum(LUUNFMIL_3$percent)
+
+# merge the dataframes
+LUUNFMIL_dat <- rbind(LUUNFMIL_1, LUUNFMIL_2, LUUNFMIL_3)
+
+# change cluster to factor
+LUUNFMIL_dat$cluster <- as.factor(LUUNFMIL_dat$cluster)
+
+# plot the data
+ggplot(LUUNFMIL_dat, aes(x = LUUNFMIL, y = percent, fill = cluster)) +
+  geom_bar(stat = "identity", position = "dodge", group = LUUNFMIL_dat$LUUNFMIL) +
+  labs(title = "Percentage of Each Value for LUUNFMIL for Each Cluster", x = "Cluster", y = "Percentage") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+##### LUPDEC
+```{r}
+LUPDEC_vals <- unique(linear_dat$LUPDEC)
+
+# get the counts for each value for each cluster
+LUPDEC_1 <- data.frame(table(cluster_1_rows$LUPDEC))
+LUPDEC_2 <- data.frame(table(cluster_2_rows$LUPDEC))
+LUPDEC_3 <- data.frame(table(cluster_3_rows$LUPDEC))
+
+# add the cluster number to each dataframe
+LUPDEC_1 <- mutate(LUPDEC_1, cluster = 1)
+LUPDEC_2 <- mutate(LUPDEC_2, cluster = 2)
+LUPDEC_3 <- mutate(LUPDEC_3, cluster = 3)
+
+# rename the columns
+LUPDEC_1 <- rename(LUPDEC_1, LUPDEC = Var1, Freq = Freq)
+LUPDEC_2 <- rename(LUPDEC_2, LUPDEC = Var1, Freq = Freq)
+LUPDEC_3 <- rename(LUPDEC_3, LUPDEC = Var1, Freq = Freq)
+
+# merge the dataframes
+LUPDEC_dat <- rbind(LUPDEC_1, LUPDEC_2, LUPDEC_3)
+LUPDEC_dat
+
+# change cluster to factor
+LUPDEC_dat$cluster <- as.factor(LUPDEC_dat$cluster)
+
+# plot adjacent bars for each value for each cluster
+ggplot(LUPDEC_dat, aes(x = LUPDEC, y = Freq, fill = cluster)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Count of Each Value for LUPDEC for Each Cluster", x = "Cluster", y = "Count") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+# plotting the percentage of each value for LUPDEC for each cluster
+# get the total number of rows for each cluster
+LUPDEC_total_1 <- nrow(cluster_1_rows)
+LUPDEC_total_2 <- nrow(cluster_2_rows)
+LUPDEC_total_3 <- nrow(cluster_3_rows)
+
+# get the percentage of each value for each cluster
+LUPDEC_1 <- mutate(LUPDEC_1, percent = Freq / LUPDEC_total_1)
+LUPDEC_2 <- mutate(LUPDEC_2, percent = Freq / LUPDEC_total_2)
+LUPDEC_3 <- mutate(LUPDEC_3, percent = Freq / LUPDEC_total_3)
+
+# printing the values to make sure they equal 1
+sum(LUPDEC_1$percent)
+sum(LUPDEC_2$percent)
+sum(LUPDEC_3$percent)
+
+# merge the dataframes
+LUPDEC_dat <- rbind(LUPDEC_1, LUPDEC_2, LUPDEC_3)
+
+# change cluster to factor
+LUPDEC_dat$cluster <- as.factor(LUPDEC_dat$cluster)
+
+# plot the data
+ggplot(LUPDEC_dat, aes(x = LUPDEC, y = percent, fill = cluster)) +
+  geom_bar(stat = "identity", position = "dodge", group = LUPDEC_dat$LUPDEC) +
+  labs(title = "Percentage of Each Value for LUPDEC for Each Cluster", x = "Cluster", y = "Percentage") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
-#### LRADJ
+#### Additional Plots
+##### LRADJ
 ```{r}
 LRADJ_vals <- unique(linear_dat$LRADJ)
 
@@ -518,7 +884,7 @@ ggplot(LRADJ_dat, aes(x = LRADJ, y = percent, fill = cluster)) +
     theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
-#### LUADDY
+##### LUADDY
 ```{r}
 LUADDY_vals <- unique(linear_dat$LUADDY)
 
@@ -581,7 +947,7 @@ ggplot(LUADDY_dat, aes(x = LUADDY, y = percent, fill = cluster)) +
     theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
-#### LULVHRS
+##### LULVHRS
 ```{r}
 LULVHRS_vals <- unique(linear_dat$LULVHRS)
 
@@ -648,7 +1014,7 @@ ggplot(LULVHRS_dat, aes(x = LULVHRS, y = percent, fill = cluster)) +
     labs(title = "Percentage of Each Value for LULVHRS for Each Cluster", x = "Cluster", y = "Percentage") +
     theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
-#### 
+
 
 ## Logisitic Regression - Part/Full-Time
 ### Set Up

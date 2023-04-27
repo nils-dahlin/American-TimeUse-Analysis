@@ -28,9 +28,7 @@ ggplot(xyz_dat, aes(x = xyz, y = Freq, fill = cluster)) +
   geom_bar(stat = "identity", position = "dodge") +
   labs(title = "Count of Each Value for xyz for Each Cluster", x = "Cluster", y = "Count") +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
-```
 
-```{r}
 # plotting the percentage of each value for xyz for each cluster
 # get the total number of rows for each cluster
 xyz_total_1 <- nrow(cluster_1_rows)
