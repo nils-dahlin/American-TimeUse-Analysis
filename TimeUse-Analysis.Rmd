@@ -19,6 +19,8 @@ library(tree)
 library(ggplot2)
 library(tidyr)
 library(randomForest)
+library(glmnet)
+library(ranger)
 
 # activity_dat contains the data/features regarding the
 # activities respondents did throughout the week as well
@@ -704,23 +706,23 @@ rfr_importance
 
 
 ```{r}
-# Predicting the income bracket of the test data set
+# Predicting the income of the test data set
 rfr_pred <- predict(rfr_model, rfr_test)
 # rf_pred
 ```
 
 ```{r}
 # Calculate MSE
-rfr_mse <- mean((test$weekly_income - rfr_pred)^2)
+rfr_mse <- mean((rfr_test$weekly_income - rfr_pred)^2)
 rfr_mse
 rfr_rmse <- sqrt(rfr_mse)
 rfr_rmse
 
 # rfr_test
-sst <- sum((rfr_test$weekly_income - mean(rfr_test$weekly_income))^2)
-ssr <- sum((rfr_pred - mean(rfr_test$weekly_income))^2)
+rfr_sst <- sum((rfr_test$weekly_income - mean(rfr_test$weekly_income))^2)
+rfr_ssr <- sum((rfr_pred - mean(rfr_test$weekly_income))^2)
 # Calculate R^2
-rfr_r2 <- 1 - (ssr / sst)
+rfr_r2 <- 1 - (rfr_ssr / rfr_sst)
 rfr_r2
 ```
 
@@ -746,6 +748,60 @@ ggplot(rfr_sample, aes(x = weekly_income, y = pred)) +
          x = "Actual Weekly Income", y = "Predicted Weekly Income") +
     xlim(c(0, sampl_max)) +
     ylim(c(0, sampl_max))
+```
+
+### Lasso Regression
+
+```{r}
+# Using same training and testing data sets as random forest regression
+# Creating the lasso random forest classifer with ranger
+lasso_model <- ranger(weekly_income ~ ., data = rfr_train, num.trees = 500, 
+                      importance = "impurity", verbose = TRUE)
+```
+
+```{r}
+# Predicting the income of the test data set
+lasso_pred <- predict(lasso_model, rfr_test)$predictions
+# lasso_pred
+```
+
+```{r}
+# Calculate MSE
+lasso_mse <- mean((rfr_test$weekly_income - lasso_pred)^2)
+lasso_mse
+lasso_rmse <- sqrt(lasso_mse)
+lasso_rmse
+
+# rfr_test
+lasso_sst <- sum((rfr_test$weekly_income - mean(rfr_test$weekly_income))^2)
+lasso_ssr <- sum((lasso_pred - mean(rfr_test$weekly_income))^2)
+# Calculate R^2
+lasso_r2 <- 1 - (lasso_ssr / lasso_sst)
+lasso_r2
+```
+
+```{r}
+# importance of each variable
+lasso_importance <- lasso_model$variable.importance
+# c('double', 'numeric')
+# save to csv to sort in python cause I can't figure out how to do it in R
+write.csv(lasso_importance, "python/lasso_importance.csv")
+```
+
+```{r}
+# read in the sorted csv
+lasso_importance <- read.csv("python/lasso_importance_sorted.csv")
+lasso_importance
+```
+
+```{r}
+lasso_importance_25 = lasso_importance[1:20, ]
+# plotting the importance of each variable
+ggplot(lasso_importance_25, aes(x = reorder(feature, importance), y = importance)) +
+    geom_bar(stat = "identity") +
+    labs(title = "Lasso - Importance of Each Variable", 
+         x = "Variable", y = "Importance") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
 ## RF Classifier
