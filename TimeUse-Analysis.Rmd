@@ -613,6 +613,7 @@ ggplot(LULVHRS_dat, aes(x = LULVHRS, y = percent, fill = cluster)) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 #### 
+
 ## Logisitic Regression - Part/Full-Time
 ### Set Up
 ```{r glm setup}
@@ -660,17 +661,52 @@ unique(logreg_dat$employment_level)
 ```{r logreg model}
 logreg <- glm(formula=employment_level~., data = train, family = "binomial")
 
-```
-
-```{r}
-summary(logreg)
-```
-
-```{r}
-test_pred = predict(logreg, test)
+test_pred = predict(logreg, test[,-6],type = "response")
+test_pred = ifelse(test_pred>.5,2,1)
 actual = test$employment_level
-table(test_pred,actual)
+confmat = table(test_pred,actual)
+confmat
+log_acc = sum(diag(confmat))/sum(confmat)
+log_acc
+
+full_time_misclass = confmat[2,1]/sum(confmat[,1])
+print(paste("Full Time Error Rate:",full_time_misclass))
+part_time_misclass = confmat[1,2]/sum(confmat[,2])
+print(paste("Part Time Error Rate:",part_time_misclass))
+print(paste("prop of full time in test:",sum(test$employment_level=="(1) Full time")/nrow(test)))
 ```
+
+```{r}
+plot(logreg)
+```
+
+```{r}
+test_pred = predict(logreg, test[,-6],type = "response")
+test_pred = ifelse(test_pred>.3,2,1)
+confmat = table(test_pred,actual)
+confmat
+log_acc = sum(diag(confmat))/sum(confmat)
+log_acc
+
+full_time_misclass = confmat[2,1]/sum(confmat[,1])
+print(paste("Full Time Error Rate:",full_time_misclass))
+part_time_misclass = confmat[1,2]/sum(confmat[,2])
+print(paste("Part Time Error Rate:",part_time_misclass))
+#print(paste("prop of full time in test:",sum(test$employment_level=="(1) Full time")/nrow(test)))
+```
+
+
+```{r}
+xtrain = as.matrix(train[,-6])
+xtest = as.matrix(test[,-6])
+ytrain = as.matrix(train[,6])
+ytest = as.matrix(test[,6])
+ridge_reg = glmnet(xtrain, ytrain,  alpha = 1)
+
+confusion.glmnet(ridge_reg,xtest,family = "binomial")
+
+```
+
 
 
 ## Random Forest
