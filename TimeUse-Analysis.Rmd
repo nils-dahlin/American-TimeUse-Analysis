@@ -16,6 +16,9 @@ knitr::opts_chunk$set(echo = TRUE)
 library(dplyr)
 library(rpart)
 library(tree)
+library(ggplot2)
+library(tidyr)
+library(randomForest)
 
 # activity_dat contains the data/features regarding the
 # activities respondents did throughout the week as well
@@ -133,7 +136,7 @@ linear_dat <- linear_dat %>%
 # Add two decimal places to weekly_income
 summary_dat$weekly_income <- summary_dat$weekly_income / 100
 ```
-
+### Surveyq Test
 ```{r testing dat}
 dim(surveyq_dat)
 surveyq_dat[duplicated(surveyq_dat$TUCASEID),]
@@ -294,13 +297,6 @@ avg_dat
 ```
 
 ```{r}
-library(ggplot2)
-library(tidyr)
-# bar plot each variable next to each other
-# barplot(avg_dat, beside = TRUE, legend = TRUE, col = c("red", "blue", "green"))
-# using ggplot
-# side by side bar plot for each variable for each cluster with the y axis being the average value
-
 # convert the avg_dat to a dataframe
 avg_dat_graph <- as.data.frame(avg_dat)
 
@@ -310,8 +306,6 @@ avg_dat_graph$cluster <- rownames(avg_dat_graph)
 # convert the dataframe to long format
 avg_dat_graph <- gather(avg_dat_graph, variable, value, -cluster)
 
-# # plot the data
-# 
 # ggplot(avg_dat_graph, aes(x = variable, y = value, fill = cluster)) +
 #   geom_bar(stat = "identity", position = "dodge") +
 #       labs(title = "Average Values of Variables for Each Cluster", x = "Variables", y = "Average Value") +
@@ -631,12 +625,12 @@ unique(logreg_dat$employment_level)
 ### GLM Model
 ```{r logreg model}
 logreg <- glm(formula=employment_level~., data = train, family = "binomial")
-
 ```
 
 ```{r}
 summary(logreg)
 ```
+
 ```{r}
 test_pred = predict(logreg, test)
 actual = test$employment_level
@@ -650,11 +644,6 @@ actual = test$employment_level
 rf_dat <- summary_dat %>%
     filter(weekly_income != -0.01) %>%
     filter(!is.na(weekly_income))
-```
-
-```{r}
-# importing the randomForest library
-library(randomForest)
 ```
 
 ### Random Forest Regression
@@ -678,6 +667,14 @@ rfr_model
 ```
 
 ```{r}
+rfr_importance <- importance(rfr_model)
+# order the importance
+rfr_importance <- rfr_importance[order(rfr_importance[, 1], decreasing = TRUE), ]
+rfr_importance
+```
+
+
+```{r}
 # Predicting the income bracket of the test data set
 rfr_pred <- predict(rfr_model, rfr_test)
 # rf_pred
@@ -689,9 +686,37 @@ rfr_mse <- mean((test$weekly_income - rfr_pred)^2)
 rfr_mse
 rfr_rmse <- sqrt(rfr_mse)
 rfr_rmse
+
+# rfr_test
+sst <- sum((rfr_test$weekly_income - mean(rfr_test$weekly_income))^2)
+ssr <- sum((rfr_pred - mean(rfr_test$weekly_income))^2)
 # Calculate R^2
-rfr_r2 <- 1 - (rfr_mse / var(test$weekly_income))
+rfr_r2 <- 1 - (ssr / sst)
 rfr_r2
+```
+
+```{r}
+sampl_num <- 250
+# sampling sampl_num random rows from the test data set
+# and plotting the predicted weekly income vs the actual weekly income
+rfr_sample <- rfr_test[sample(1:nrow(rfr_test), sampl_num), ]
+rfr_sample <- rfr_sample %>%
+    mutate(pred = rfr_pred[1:sampl_num])
+rfr_sample
+
+# finds the max to set bounds for the plot and increases it by a bit
+sampl_max <- max(rfr_sample$weekly_income, rfr_sample$pred) * 1.025
+```
+
+```{r, fig.width=6,fig.height=6}
+# Plotting the predicted weekly income vs the actual weekly income
+ggplot(rfr_sample, aes(x = weekly_income, y = pred)) +
+    geom_point() +
+    geom_abline(intercept = 0, slope = 1, color = "red") +
+    labs(title = "QQ - Predicted Weekly Income vs Actual Weekly Income", 
+         x = "Actual Weekly Income", y = "Predicted Weekly Income") +
+    xlim(c(0, sampl_max)) +
+    ylim(c(0, sampl_max))
 ```
 
 ## RF Classifier
@@ -755,6 +780,13 @@ rfc_test <- rfc_dat[-train_index, ]
 # Creating the random forest classifier
 rfc_model <- randomForest(income_bracket ~ ., data = rfc_train, ntree = 500)
 # rfc_model
+```
+
+```{r}
+rfc_importance <- importance(rfc_model)
+# order the importance
+rfc_importance <- rfc_importance[order(rfc_importance[, 1], decreasing = TRUE), ]
+rfc_importance
 ```
 
 ```{r}
