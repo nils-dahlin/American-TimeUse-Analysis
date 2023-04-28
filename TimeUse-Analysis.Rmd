@@ -24,7 +24,7 @@ library(ranger)
 library(corrplot)
 library(car)
 library(pROC)
-library(dbscan)
+library(stats)
 
 # activity_dat contains the data/features regarding the
 # activities respondents did throughout the week as well
@@ -288,10 +288,12 @@ plot(step_lm1$anova$AIC, xlab = "Number of variables", ylab = "AIC")
 ```{r}
 step_lm1
 # This is the best model according to AIC
-lm2 <- lm(formula = weekly_income ~ LUADDY + LUADHR + LUADLOC + LUPAID + 
-    LUPDBRTH + LUPDERR + LUPDOIL + LUPTHOL + LUPTOSCK + LUPTSCK + 
-    LUPTVAC + LUUNBRTH + LUUNEVR + LUUNEVR4 + LUUNFMIL + LUUNPD, 
-    data = lin_train_dat)
+lm2 <- lm(
+    formula = weekly_income ~ LUADDY + LUADHR + LUADLOC + LUPAID +
+        LUPDBRTH + LUPDERR + LUPDOIL + LUPTHOL + LUPTOSCK + LUPTSCK +
+        LUPTVAC + LUUNBRTH + LUUNEVR + LUUNEVR4 + LUUNFMIL + LUUNPD,
+    data = lin_train_dat
+)
 ```
 
 ```{r}
@@ -304,7 +306,6 @@ lm2_tval <- summary(lm2)$coefficients[, "t value"]
 lm2_tval_abs <- abs(lm2_tval)
 lm2_tval_sorted <- lm2_tval[order(lm2_tval_abs, decreasing = TRUE)]
 lm2_tval_sorted
-
 ```
 
 ```{r}
@@ -376,10 +377,11 @@ head(loadings)
 
 ```{r}
 # plotting two dimensions
-plot(pca$x[, 1], pca$x[, 2], 
-     main = "Job Flexibility Variables Reduced to Two Dimensions with PCA",
-     xlab = "PCA 1",
-     ylab = "PCA 2")
+plot(pca$x[, 1], pca$x[, 2],
+    main = "Job Flexibility Variables Reduced to Two Dimensions with PCA",
+    xlab = "PCA 1",
+    ylab = "PCA 2"
+)
 ```
 
 ### Cluster Analysis on PCA
@@ -413,10 +415,12 @@ kmeans_pca
 # red yellow green
 colors <- c("red", "green", "blue")
 # plot the clusters with labels for which cluster they are
-plot(pca$x[, 1], pca$x[, 2], col = colors[kmeans_pca$cluster],
-     main = "2D PCA with Job Flexibility Variables Clustered",
-     xlab = "PCA 1",
-     ylab = "PCA 2")
+plot(pca$x[, 1], pca$x[, 2],
+    col = colors[kmeans_pca$cluster],
+    main = "2D PCA with Job Flexibility Variables Clustered",
+    xlab = "PCA 1",
+    ylab = "PCA 2"
+)
 # putting the labels on the center of the clusters
 text(kmeans_pca$centers[, 1], kmeans_pca$centers[, 2], labels = 1:3, col = "black")
 ```
@@ -531,9 +535,9 @@ LUUNEVR_dat$cluster <- as.factor(LUUNEVR_dat$cluster)
 
 # plot adjacent bars for each value for each cluster
 ggplot(LUUNEVR_dat, aes(x = LUUNEVR, y = Freq, fill = cluster)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  labs(title = "Count of Each Value for LUUNEVR for Each Cluster", x = "Cluster", y = "Count") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    geom_bar(stat = "identity", position = "dodge") +
+    labs(title = "Count of Each Value for LUUNEVR for Each Cluster", x = "Cluster", y = "Count") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
 # plotting the percentage of each value for LUUNEVR for each cluster
 # get the total number of rows for each cluster
@@ -559,9 +563,9 @@ LUUNEVR_dat$cluster <- as.factor(LUUNEVR_dat$cluster)
 
 # plot the data
 ggplot(LUUNEVR_dat, aes(x = LUUNEVR, y = percent, fill = cluster)) +
-  geom_bar(stat = "identity", position = "dodge", group = LUUNEVR_dat$LUUNEVR) +
-  labs(title = "Percentage of Each Value for LUUNEVR for Each Cluster", x = "Cluster", y = "Percentage") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    geom_bar(stat = "identity", position = "dodge", group = LUUNEVR_dat$LUUNEVR) +
+    labs(title = "Percentage of Each Value for LUUNEVR for Each Cluster", x = "Cluster", y = "Percentage") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 ##### LUPTOHOL
 ```{r}
@@ -591,9 +595,9 @@ LUPTOHOL_dat$cluster <- as.factor(LUPTOHOL_dat$cluster)
 
 # plot adjacent bars for each value for each cluster
 ggplot(LUPTOHOL_dat, aes(x = LUPTOHOL, y = Freq, fill = cluster)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  labs(title = "Count of Each Value for LUPTOHOL for Each Cluster", x = "Cluster", y = "Count") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    geom_bar(stat = "identity", position = "dodge") +
+    labs(title = "Count of Each Value for LUPTOHOL for Each Cluster", x = "Cluster", y = "Count") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
 # plotting the percentage of each value for LUPTOHOL for each cluster
 # get the total number of rows for each cluster
@@ -619,9 +623,9 @@ LUPTOHOL_dat$cluster <- as.factor(LUPTOHOL_dat$cluster)
 
 # plot the data
 ggplot(LUPTOHOL_dat, aes(x = LUPTOHOL, y = percent, fill = cluster)) +
-  geom_bar(stat = "identity", position = "dodge", group = LUPTOHOL_dat$LUPTOHOL) +
-  labs(title = "Percentage of Each Value for LUPTOHOL for Each Cluster", x = "Cluster", y = "Percentage") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    geom_bar(stat = "identity", position = "dodge", group = LUPTOHOL_dat$LUPTOHOL) +
+    labs(title = "Percentage of Each Value for LUPTOHOL for Each Cluster", x = "Cluster", y = "Percentage") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 ##### LUPAID
 ```{r}
@@ -651,9 +655,9 @@ LUPAID_dat$cluster <- as.factor(LUPAID_dat$cluster)
 
 # plot adjacent bars for each value for each cluster
 ggplot(LUPAID_dat, aes(x = LUPAID, y = Freq, fill = cluster)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  labs(title = "Count of Each Value for LUPAID for Each Cluster", x = "Cluster", y = "Count") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    geom_bar(stat = "identity", position = "dodge") +
+    labs(title = "Count of Each Value for LUPAID for Each Cluster", x = "Cluster", y = "Count") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
 # plotting the percentage of each value for LUPAID for each cluster
 # get the total number of rows for each cluster
@@ -680,9 +684,9 @@ LUPAID_dat$cluster <- as.factor(LUPAID_dat$cluster)
 
 # plot the data
 ggplot(LUPAID_dat, aes(x = LUPAID, y = percent, fill = cluster)) +
-  geom_bar(stat = "identity", position = "dodge", group = LUPAID_dat$LUPAID) +
-  labs(title = "Percentage of Each Value for LUPAID for Each Cluster", x = "Cluster", y = "Percentage") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    geom_bar(stat = "identity", position = "dodge", group = LUPAID_dat$LUPAID) +
+    labs(title = "Percentage of Each Value for LUPAID for Each Cluster", x = "Cluster", y = "Percentage") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 ##### LUPTSCK
 ```{r}
@@ -712,9 +716,9 @@ LUPTSCK_dat$cluster <- as.factor(LUPTSCK_dat$cluster)
 
 # plot adjacent bars for each value for each cluster
 ggplot(LUPTSCK_dat, aes(x = LUPTSCK, y = Freq, fill = cluster)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  labs(title = "Count of Each Value for LUPTSCK for Each Cluster", x = "Cluster", y = "Count") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    geom_bar(stat = "identity", position = "dodge") +
+    labs(title = "Count of Each Value for LUPTSCK for Each Cluster", x = "Cluster", y = "Count") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
 # plotting the percentage of each value for LUPTSCK for each cluster
 # get the total number of rows for each cluster
@@ -740,9 +744,9 @@ LUPTSCK_dat$cluster <- as.factor(LUPTSCK_dat$cluster)
 
 # plot the data
 ggplot(LUPTSCK_dat, aes(x = LUPTSCK, y = percent, fill = cluster)) +
-  geom_bar(stat = "identity", position = "dodge", group = LUPTSCK_dat$LUPTSCK) +
-  labs(title = "Percentage of Each Value for LUPTSCK for Each Cluster", x = "Cluster", y = "Percentage") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    geom_bar(stat = "identity", position = "dodge", group = LUPTSCK_dat$LUPTSCK) +
+    labs(title = "Percentage of Each Value for LUPTSCK for Each Cluster", x = "Cluster", y = "Percentage") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 ##### LUUNFMIL
 ```{r}
@@ -772,9 +776,9 @@ LUUNFMIL_dat$cluster <- as.factor(LUUNFMIL_dat$cluster)
 
 # plot adjacent bars for each value for each cluster
 ggplot(LUUNFMIL_dat, aes(x = LUUNFMIL, y = Freq, fill = cluster)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  labs(title = "Count of Each Value for LUUNFMIL for Each Cluster", x = "Cluster", y = "Count") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    geom_bar(stat = "identity", position = "dodge") +
+    labs(title = "Count of Each Value for LUUNFMIL for Each Cluster", x = "Cluster", y = "Count") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
 # plotting the percentage of each value for LUUNFMIL for each cluster
 # get the total number of rows for each cluster
@@ -800,9 +804,9 @@ LUUNFMIL_dat$cluster <- as.factor(LUUNFMIL_dat$cluster)
 
 # plot the data
 ggplot(LUUNFMIL_dat, aes(x = LUUNFMIL, y = percent, fill = cluster)) +
-  geom_bar(stat = "identity", position = "dodge", group = LUUNFMIL_dat$LUUNFMIL) +
-  labs(title = "Percentage of Each Value for LUUNFMIL for Each Cluster", x = "Cluster", y = "Percentage") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    geom_bar(stat = "identity", position = "dodge", group = LUUNFMIL_dat$LUUNFMIL) +
+    labs(title = "Percentage of Each Value for LUUNFMIL for Each Cluster", x = "Cluster", y = "Percentage") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 ##### LUPDEC
 ```{r}
@@ -832,9 +836,9 @@ LUPDEC_dat$cluster <- as.factor(LUPDEC_dat$cluster)
 
 # plot adjacent bars for each value for each cluster
 ggplot(LUPDEC_dat, aes(x = LUPDEC, y = Freq, fill = cluster)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  labs(title = "Count of Each Value for LUPDEC for Each Cluster", x = "Cluster", y = "Count") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    geom_bar(stat = "identity", position = "dodge") +
+    labs(title = "Count of Each Value for LUPDEC for Each Cluster", x = "Cluster", y = "Count") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
 # plotting the percentage of each value for LUPDEC for each cluster
 # get the total number of rows for each cluster
@@ -860,9 +864,9 @@ LUPDEC_dat$cluster <- as.factor(LUPDEC_dat$cluster)
 
 # plot the data
 ggplot(LUPDEC_dat, aes(x = LUPDEC, y = percent, fill = cluster)) +
-  geom_bar(stat = "identity", position = "dodge", group = LUPDEC_dat$LUPDEC) +
-  labs(title = "Percentage of Each Value for LUPDEC for Each Cluster", x = "Cluster", y = "Percentage") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    geom_bar(stat = "identity", position = "dodge", group = LUPDEC_dat$LUPDEC) +
+    labs(title = "Percentage of Each Value for LUPDEC for Each Cluster", x = "Cluster", y = "Percentage") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
 ## Logisitic Regression - Part/Full-Time
@@ -988,13 +992,14 @@ rfr_test <- rfr_dat[-train_index, ]
 # Creating the random forest classifier
 rfr_model <- randomForest(weekly_income ~ ., data = rfr_train, ntree = 500)
 rfr_model
+sqrt(378404.2)
 ```
 
 ```{r}
-rfr_importance <- importance(rfr_model)
+rfr_importance <- randomForest::importance(rfr_model)
 # order the importance
 rfr_importance <- rfr_importance[order(rfr_importance[, 1], decreasing = TRUE), ]
-rfr_importance
+length(rfr_importance)
 ```
 
 
@@ -1013,9 +1018,11 @@ rfr_rmse
 
 # rfr_test
 rfr_sst <- sum((rfr_test$weekly_income - mean(rfr_test$weekly_income))^2)
+rfr_sst
 rfr_ssr <- sum((rfr_pred - mean(rfr_test$weekly_income))^2)
+rfr_ssr
 # Calculate R^2
-rfr_r2 <- 1 - (rfr_ssr / rfr_sst)
+rfr_r2 <- (rfr_ssr / rfr_sst)
 rfr_r2
 ```
 
@@ -1054,6 +1061,8 @@ lasso_model <- ranger(weekly_income ~ .,
     data = rfr_train, num.trees = 500,
     importance = "impurity", verbose = TRUE
 )
+lasso_model
+sqrt(370554.9)
 ```
 
 ```{r}
@@ -1091,10 +1100,23 @@ lasso_importance <- read.csv("python/lasso_importance_sorted.csv")
 lasso_importance
 ```
 
-```{r}
-lasso_importance_25 <- lasso_importance[1:20, ]
+```{r fig.width=6,fig.height=6}
+lasso_importance_20 <- lasso_importance[1:15, ]
+lasso_importance_20
+# renaming the feature column
+renames <- c(
+    "Working", "Sleeping", "Eating", "Watching TV & movies (Not religious)",
+    "Travel related to work", "Washing and dressing", "Reading for pleasure",
+    "Food preparation", "Travel related to eating", "Socializing with others",
+    "Travel related to shopping (Consumer goods)",
+    "Interior cleaning", "Shopping (Consumer goods)", "Physical care for children",
+    "Relaxing, thinking"
+)
+
+lasso_importance_20$feature <- renames
+
 # plotting the importance of each variable
-ggplot(lasso_importance_25, aes(x = reorder(feature, importance), y = importance)) +
+ggplot(lasso_importance_20, aes(x = reorder(feature, importance), y = importance)) +
     geom_bar(stat = "identity") +
     labs(
         title = "Lasso - Importance of Each Variable",
@@ -1167,7 +1189,7 @@ rfc_model <- randomForest(income_bracket ~ ., data = rfc_train, ntree = 500)
 ```
 
 ```{r}
-rfc_importance <- importance(rfc_model)
+rfc_importance <- randomForest::importance(rfc_model)
 # order the importance
 rfc_importance <- rfc_importance[order(rfc_importance[, 1], decreasing = TRUE), ]
 rfc_importance
@@ -1197,7 +1219,11 @@ library(caret)
 
 ```{r}
 # Confusion matrix
-confusionMatrix(rfc_pred, rfc_test$income_bracket)
+conf_mat_rfc <- confusionMatrix(rfc_pred, rfc_test$income_bracket)
+conf_mat_rfc
+```
+
+```{r}  
 ```
 
 ```{r}
