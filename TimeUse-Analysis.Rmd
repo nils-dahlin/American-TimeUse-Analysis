@@ -14,6 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # libraries needed
 library(dplyr)
+library(tidyverse)
 library(rpart)
 library(tree)
 library(ggplot2)
@@ -896,8 +897,9 @@ cols <- c("memory_issues", "dressing_issues", "hearing_issues", "eye_issues", "i
 logreg_dat <- logreg_dat[logreg_dat[cols] != "(-1) Blank", ]
 logreg_dat <- logreg_dat[logreg_dat$unionized != "(-1) Blank", ]
 
-logreg_dat <- logreg_dat %>% select(-(T010101:T189999), -weekly_income)
+logreg_dat <- logreg_dat %>% select(-weekly_income)
 logreg_dat <- logreg_dat[!duplicated(logreg_dat), ]
+logreg_dat$employment_level <- ifelse(logreg_dat$employment_level=="(1) Full time",0,1)
 ```
 
 ### Testing/Training Data
@@ -919,7 +921,7 @@ unique(logreg_dat$employment_level)
 logreg <- glm(formula = employment_level ~ ., data = train, family = "binomial")
 
 test_pred <- predict(logreg, test[, -6], type = "response")
-test_pred <- ifelse(test_pred > .5, 2, 1)
+test_pred <- ifelse(test_pred > .5, 1, 0)
 actual <- test$employment_level
 confmat <- table(test_pred, actual)
 confmat
@@ -930,16 +932,12 @@ full_time_misclass <- confmat[2, 1] / sum(confmat[, 1])
 print(paste("Full Time Error Rate:", full_time_misclass))
 part_time_misclass <- confmat[1, 2] / sum(confmat[, 2])
 print(paste("Part Time Error Rate:", part_time_misclass))
-print(paste("prop of full time in test:", sum(test$employment_level == "(1) Full time") / nrow(test)))
-```
-
-```{r}
-plot(logreg)
+print(paste("prop of full time in test:", sum(test$employment_level == 0) / nrow(test)))
 ```
 
 ```{r}
 test_pred <- predict(logreg, test[, -6], type = "response")
-test_pred <- ifelse(test_pred > .3, 2, 1)
+test_pred <- ifelse(test_pred > .3, 1, 0)
 confmat <- table(test_pred, actual)
 confmat
 log_acc <- sum(diag(confmat)) / sum(confmat)
@@ -952,17 +950,71 @@ print(paste("Part Time Error Rate:", part_time_misclass))
 # print(paste("prop of full time in test:",sum(test$employment_level=="(1) Full time")/nrow(test)))
 ```
 
-
+### Lasso Regression
+#### Setting up Data/Training and Testing
 ```{r}
-xtrain <- as.matrix(train[, -6])
-xtest <- as.matrix(test[, -6])
-ytrain <- as.matrix(train[, 6])
-ytest <- as.matrix(test[, 6])
-ridge_reg <- glmnet(xtrain, ytrain, alpha = 1)
+lasso_dat <- logreg_dat %>% select(-id)
 
-confusion.glmnet(ridge_reg, xtest, family = "binomial")
+lasso_train <- lasso_dat[train_samp, ]
+lasso_train <- model.matrix(~.,lasso_train)[,-1]
+
+lasso_test <- lasso_dat[-train_samp, ]
+lasso_test <-model.matrix(~.,lasso_test)[,-1]
+
+
+xtrain <- lasso_train[,-36]
+xtest <- lasso_test[,-36]
+ytrain <- lasso_train[,36]
+ytest <- lasso_test[,36]
 ```
 
+#### CV for Best Lambda/Lasso Model
+##### CAUTION - THIS CHUNK TAKES A LITTLE WHILE TO RUN
+```{r}
+cvlasso <- cv.glmnet(xtrain, ytrain, alpha = 1, family = "binomial")
+cvlasso$lambda.min
+cvlasso$lambda.1se
+
+lasso <- glmnet(xtrain,ytrain,alpha=1,family = "binomial",lambda = cvlasso$lambda.1se)
+
+```
+
+```{r}
+pacman::p_load(jtools)
+coef_p <- summ(logreg)$coeftable[,4]
+signif <- as.matrix(coef_p[coef_p<.1])
+coef_est <- summ(logreg)$coeftable[,1][coef_p<.1]
+
+coef_name <- names(coef_est)
+coef_est <- as.numeric(coef_est)
+p_vals <- as.numeric(coef_p[coef_p<.1])
+signif_coefs = data.frame(coef_name,coef_est,p_vals)
+signif_coefs <- na.omit(signif_coefs)
+signif_coefs
+```
+
+```{r}
+plot(cvlasso)
+print(c(log(.01),log(.001)))
+plot(lasso)
+```
+
+
+#### Lasso Confusion Matrix
+```{r}
+
+confusion.glmnet(lasso, xtest, ytest, family = "binomial")
+
+lasso_pred <- predict.glmnet(lasso, xtest, type = "response")
+lasso_pred <- array(ifelse(lasso_pred>.5,1,0))
+lasso_act <- array(ytest)
+table(lasso_pred,lasso_act)
+caret::confusionMatrix(as.factor(lasso_pred),as.factor(lasso_act))
+```
+
+```{r}
+
+```
 
 
 ## Random Forest
