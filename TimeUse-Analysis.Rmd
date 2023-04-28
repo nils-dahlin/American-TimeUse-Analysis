@@ -216,7 +216,9 @@ head(linear_dat)
 
 ```{r linear train test}
 # training/testing data
-# set.seed(47)
+# setting this seed so the test/train splits in a certain way that will allow
+# the linear models to act nicely with categorical data
+set.seed(3223232)
 lin_train <- sample(1:nrow(linear_dat), 0.8 * nrow(linear_dat))
 lin_test <- setdiff(1:nrow(linear_dat), lin_train)
 
@@ -232,11 +234,22 @@ lin_test_dat <- linear_dat[lin_test, ]
 mean(linear_dat$weekly_income)
 median(linear_dat$weekly_income)
 sd(linear_dat$weekly_income)
+min(linear_dat$weekly_income)
+max(linear_dat$weekly_income)
 ```
 
 ```{r}
 # density plot of weekly income
-plot(density(linear_dat$weekly_income))
+plot(density(linear_dat$weekly_income), main = "Density Plot of Weekly Income")
+abline(v = mean(linear_dat$weekly_income), col = "red", lwd = 2)
+text(mean(linear_dat$weekly_income), 1.2, "Mean", pos = 3, col = "red")
+abline(v = median(linear_dat$weekly_income), col = "blue", lwd = 2)
+text(median(linear_dat$weekly_income), 0.02, "Median", pos = 3, col = "blue")
+sd_val <- sd(linear_dat$weekly_income)
+abline(v = mean(linear_dat$weekly_income) + sd_val, col = "green", lty = 2)
+text(mean(linear_dat$weekly_income) + sd_val, 0.015, "1 SD", pos = 3, col = "green")
+abline(v = mean(linear_dat$weekly_income) - sd_val, col = "green", lty = 2)
+text(mean(linear_dat$weekly_income) - sd_val, 0.015, "1 SD", pos = 3, col = "green")
 ```
 
 ### Making the Model
@@ -247,28 +260,51 @@ lm1 <- lm(weekly_income ~ ., data = lin_train_dat)
 summary(lm1)
 ```
 
+```{r}
+summary(lm1)$df[1]
+```
+
+```{r}
+# testing the model
+pred <- predict(lm1, lin_test_dat)
+mse <- mean((pred - lin_test_dat$weekly_income)^2)
+mse
+sqrt(mse)
+```
+
 ```{r echo = FALSE results = hide}
 # Using stepwise variable selection to make a more interpretable model
 # This steps both forwads and back
+set.seed()
 step_lm1 <- step(lm1, direction = "both")
 plot(step_lm1)
 ```
 
 ```{r}
 plot(step_lm1$anova$AIC, xlab = "Number of variables", ylab = "AIC")
-lin_train_dat[575, ]
+# abline(v = 21, col = "red", lty = 1)
 ```
 
 ```{r}
 step_lm1
 # This is the best model according to AIC
-lm2 <- lm(weekly_income ~ LUADDY + LUADHR + LUADLOC + LUPAID +
-    LUPDBRTH + LUPDFMIL + LUPDOIL + LUPTO + LUPTOHOL + LUPTOSCK +
-    LUPTSCK + LUPTVAC, data = lin_train_dat)
+lm2 <- lm(formula = weekly_income ~ LUADDY + LUADHR + LUADLOC + LUPAID + 
+    LUPDBRTH + LUPDERR + LUPDOIL + LUPTHOL + LUPTOSCK + LUPTSCK + 
+    LUPTVAC + LUUNBRTH + LUUNEVR + LUUNEVR4 + LUUNFMIL + LUUNPD, 
+    data = lin_train_dat)
 ```
 
 ```{r}
 summary(lm2)
+summary(lm2)$df[1]
+```
+
+```{r}
+lm2_tval <- summary(lm2)$coefficients[, "t value"]
+lm2_tval_abs <- abs(lm2_tval)
+lm2_tval_sorted <- lm2_tval[order(lm2_tval_abs, decreasing = TRUE)]
+lm2_tval_sorted
+
 ```
 
 ```{r}
@@ -317,12 +353,6 @@ ggplot(plot_data, aes(x = PC, y = Cumulative_prop)) +
     theme_minimal() +
     geom_vline(xintercept = 7, linetype = "dashed")
 ```
-
-```{r}
-# plotting two dimensions
-plot(pca$x[, 1], pca$x[, 2])
-```
-
 ```{r}
 # finding the most important features
 
@@ -342,6 +372,14 @@ loadings <- data.frame(
 loadings <- loadings[order(-loadings$loadings), ]
 loadings
 head(loadings)
+```
+
+```{r}
+# plotting two dimensions
+plot(pca$x[, 1], pca$x[, 2], 
+     main = "Job Flexibility Variables Reduced to Two Dimensions with PCA",
+     xlab = "PCA 1",
+     ylab = "PCA 2")
 ```
 
 ### Cluster Analysis on PCA
@@ -373,9 +411,12 @@ kmeans_pca
 
 ```{r}
 # red yellow green
-colors <- c("red", "orange", "green")
+colors <- c("red", "green", "blue")
 # plot the clusters with labels for which cluster they are
-plot(pca$x[, 1], pca$x[, 2], col = colors[kmeans_pca$cluster])
+plot(pca$x[, 1], pca$x[, 2], col = colors[kmeans_pca$cluster],
+     main = "2D PCA with Job Flexibility Variables Clustered",
+     xlab = "PCA 1",
+     ylab = "PCA 2")
 # putting the labels on the center of the clusters
 text(kmeans_pca$centers[, 1], kmeans_pca$centers[, 2], labels = 1:3, col = "black")
 ```
@@ -436,11 +477,14 @@ avg_sal <- linear_dat %>%
     group_by(kmeans_pca$cluster) %>%
     summarise(avg_sal = mean(weekly_income))
 
+avg_sal
+
 # plot the average salary for each cluster with the colors
 ggplot(avg_dat_graph, aes(x = cluster, y = value, fill = cluster)) +
     geom_bar(stat = "identity", position = "dodge") +
     labs(title = "Average Salary for Each Cluster", x = "Cluster", y = "Average Salary") +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    scale_color_manual(colors)
 ```
 
 ```{r}
@@ -629,6 +673,7 @@ sum(LUPAID_3$percent)
 
 # merge the dataframes
 LUPAID_dat <- rbind(LUPAID_1, LUPAID_2, LUPAID_3)
+LUPAID_dat
 
 # change cluster to factor
 LUPAID_dat$cluster <- as.factor(LUPAID_dat$cluster)
@@ -819,202 +864,6 @@ ggplot(LUPDEC_dat, aes(x = LUPDEC, y = percent, fill = cluster)) +
   labs(title = "Percentage of Each Value for LUPDEC for Each Cluster", x = "Cluster", y = "Percentage") +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
-
-#### Additional Plots
-##### LRADJ
-```{r}
-LRADJ_vals <- unique(linear_dat$LRADJ)
-
-# get the counts for each value for each cluster
-LRADJ_1 <- data.frame(table(cluster_1_rows$LRADJ))
-LRADJ_2 <- data.frame(table(cluster_2_rows$LRADJ))
-LRADJ_3 <- data.frame(table(cluster_3_rows$LRADJ))
-
-# add the cluster number to each dataframe
-LRADJ_1 <- mutate(LRADJ_1, cluster = 1)
-LRADJ_2 <- mutate(LRADJ_2, cluster = 2)
-LRADJ_3 <- mutate(LRADJ_3, cluster = 3)
-
-# rename the columns
-LRADJ_1 <- rename(LRADJ_1, LRADJ = Var1, Freq = Freq)
-LRADJ_2 <- rename(LRADJ_2, LRADJ = Var1, Freq = Freq)
-LRADJ_3 <- rename(LRADJ_3, LRADJ = Var1, Freq = Freq)
-
-# merge the dataframes
-LRADJ_dat <- rbind(LRADJ_1, LRADJ_2, LRADJ_3)
-LRADJ_dat
-
-# change cluster to factor
-LRADJ_dat$cluster <- as.factor(LRADJ_dat$cluster)
-
-# plot adjacent bars for each value for each cluster
-ggplot(LRADJ_dat, aes(x = LRADJ, y = Freq, fill = cluster)) +
-    geom_bar(stat = "identity", position = "dodge") +
-    labs(title = "Count of Each Value for LRADJ for Each Cluster", x = "Cluster", y = "Count") +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1))
-```
-
-```{r}
-# plotting the percentage of each value for LRADJ for each cluster
-# get the total number of rows for each cluster
-LRADJ_total_1 <- nrow(cluster_1_rows)
-LRADJ_total_2 <- nrow(cluster_2_rows)
-LRADJ_total_3 <- nrow(cluster_3_rows)
-
-# get the percentage of each value for each cluster
-LRADJ_1 <- mutate(LRADJ_1, percent = Freq / LRADJ_total_1)
-LRADJ_2 <- mutate(LRADJ_2, percent = Freq / LRADJ_total_2)
-LRADJ_3 <- mutate(LRADJ_3, percent = Freq / LRADJ_total_3)
-
-# printing the values to make sure they equal 1
-sum(LRADJ_1$percent)
-sum(LRADJ_2$percent)
-sum(LRADJ_3$percent)
-
-# merge the dataframes
-LRADJ_dat <- rbind(LRADJ_1, LRADJ_2, LRADJ_3)
-
-# change cluster to factor
-LRADJ_dat$cluster <- as.factor(LRADJ_dat$cluster)
-
-# plot the data
-ggplot(LRADJ_dat, aes(x = LRADJ, y = percent, fill = cluster)) +
-    geom_bar(stat = "identity", position = "dodge", group = LRADJ_dat$LRADJ) +
-    labs(title = "Percentage of Each Value for LRADJ for Each Cluster", x = "Cluster", y = "Percentage") +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1))
-```
-
-##### LUADDY
-```{r}
-LUADDY_vals <- unique(linear_dat$LUADDY)
-
-# get the counts for each value for each cluster
-LUADDY_1 <- data.frame(table(cluster_1_rows$LUADDY))
-LUADDY_2 <- data.frame(table(cluster_2_rows$LUADDY))
-LUADDY_3 <- data.frame(table(cluster_3_rows$LUADDY))
-
-# add the cluster number to each dataframe
-LUADDY_1 <- mutate(LUADDY_1, cluster = 1)
-LUADDY_2 <- mutate(LUADDY_2, cluster = 2)
-LUADDY_3 <- mutate(LUADDY_3, cluster = 3)
-
-# rename the columns
-LUADDY_1 <- rename(LUADDY_1, LUADDY = Var1, Freq = Freq)
-LUADDY_2 <- rename(LUADDY_2, LUADDY = Var1, Freq = Freq)
-LUADDY_3 <- rename(LUADDY_3, LUADDY = Var1, Freq = Freq)
-
-# merge the dataframes
-LUADDY_dat <- rbind(LUADDY_1, LUADDY_2, LUADDY_3)
-LUADDY_dat
-
-# change cluster to factor
-LUADDY_dat$cluster <- as.factor(LUADDY_dat$cluster)
-
-# plot adjacent bars for each value for each cluster
-ggplot(LUADDY_dat, aes(x = LUADDY, y = Freq, fill = cluster)) +
-    geom_bar(stat = "identity", position = "dodge") +
-    labs(title = "Count of Each Value for LUADDY for Each Cluster", x = "Cluster", y = "Count") +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1))
-```
-
-```{r}
-# plotting the percentage of each value for LUADDY for each cluster
-# get the total number of rows for each cluster
-LUADDY_total_1 <- nrow(cluster_1_rows)
-LUADDY_total_2 <- nrow(cluster_2_rows)
-LUADDY_total_3 <- nrow(cluster_3_rows)
-
-# get the percentage of each value for each cluster
-LUADDY_1 <- mutate(LUADDY_1, percent = Freq / LUADDY_total_1)
-LUADDY_2 <- mutate(LUADDY_2, percent = Freq / LUADDY_total_2)
-LUADDY_3 <- mutate(LUADDY_3, percent = Freq / LUADDY_total_3)
-
-# printing the values to make sure they equal 1
-sum(LUADDY_1$percent)
-sum(LUADDY_2$percent)
-sum(LUADDY_3$percent)
-
-# merge the dataframes
-LUADDY_dat <- rbind(LUADDY_1, LUADDY_2, LUADDY_3)
-
-# change cluster to factor
-LUADDY_dat$cluster <- as.factor(LUADDY_dat$cluster)
-
-# plot the data
-ggplot(LUADDY_dat, aes(x = LUADDY, y = percent, fill = cluster)) +
-    geom_bar(stat = "identity", position = "dodge", group = LUADDY_dat$LUADDY) +
-    labs(title = "Percentage of Each Value for LUADDY for Each Cluster", x = "Cluster", y = "Percentage") +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1))
-```
-
-##### LULVHRS
-```{r}
-LULVHRS_vals <- unique(linear_dat$LULVHRS)
-
-# get the counts for each value for each cluster
-LULVHRS_1 <- data.frame(table(cluster_1_rows$LULVHRS))
-LULVHRS_2 <- data.frame(table(cluster_2_rows$LULVHRS))
-LULVHRS_3 <- data.frame(table(cluster_3_rows$LULVHRS))
-
-# add the cluster number to each dataframe
-LULVHRS_1 <- mutate(LULVHRS_1, cluster = 1)
-LULVHRS_2 <- mutate(LULVHRS_2, cluster = 2)
-LULVHRS_3 <- mutate(LULVHRS_3, cluster = 3)
-
-# Removing all negative values
-LULVHRS_1 <- LULVHRS_1[-c(1:2), ]
-LULVHRS_2 <- LULVHRS_2[-c(1:2), ]
-LULVHRS_3 <- LULVHRS_3[-c(1:2), ]
-
-# rename the columns
-LULVHRS_1 <- rename(LULVHRS_1, LULVHRS = Var1, Freq = Freq)
-LULVHRS_2 <- rename(LULVHRS_2, LULVHRS = Var1, Freq = Freq)
-LULVHRS_3 <- rename(LULVHRS_3, LULVHRS = Var1, Freq = Freq)
-
-# merge the dataframes
-LULVHRS_dat <- rbind(LULVHRS_1, LULVHRS_2, LULVHRS_3)
-LULVHRS_dat
-
-# change cluster to factor
-LULVHRS_dat$cluster <- as.factor(LULVHRS_dat$cluster)
-
-# plot adjacent bars for each value for each cluster
-ggplot(LULVHRS_dat, aes(x = LULVHRS, y = Freq, fill = cluster)) +
-    geom_bar(stat = "identity", position = "dodge") +
-    labs(title = "Count of Each Value for LULVHRS for Each Cluster", x = "Cluster", y = "Count") +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1))
-```
-
-```{r}
-# plotting the percentage of each value for LULVHRS for each cluster
-# get the total number of rows for each cluster
-LULVHRS_total_1 <- nrow(cluster_1_rows)
-LULVHRS_total_2 <- nrow(cluster_2_rows)
-LULVHRS_total_3 <- nrow(cluster_3_rows)
-
-# get the percentage of each value for each cluster
-LULVHRS_1 <- mutate(LULVHRS_1, percent = Freq / LULVHRS_total_1)
-LULVHRS_2 <- mutate(LULVHRS_2, percent = Freq / LULVHRS_total_2)
-LULVHRS_3 <- mutate(LULVHRS_3, percent = Freq / LULVHRS_total_3)
-
-# printing the values to make sure they equal 1
-sum(LULVHRS_1$percent)
-sum(LULVHRS_2$percent)
-sum(LULVHRS_3$percent)
-
-# merge the dataframes
-LULVHRS_dat <- rbind(LULVHRS_1, LULVHRS_2, LULVHRS_3)
-
-# change cluster to factor
-LULVHRS_dat$cluster <- as.factor(LULVHRS_dat$cluster)
-
-# plot the data
-ggplot(LULVHRS_dat, aes(x = LULVHRS, y = percent, fill = cluster)) +
-    geom_bar(stat = "identity", position = "dodge", group = LULVHRS_dat$LULVHRS) +
-    labs(title = "Percentage of Each Value for LULVHRS for Each Cluster", x = "Cluster", y = "Percentage") +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1))
-```
-
 
 ## Logisitic Regression - Part/Full-Time
 ### Set Up
