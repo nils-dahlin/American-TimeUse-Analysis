@@ -916,6 +916,7 @@ print("test size")
 dim(test)
 unique(logreg_dat$employment_level)
 ```
+
 ### GLM Model
 ```{r logreg model}
 logreg <- glm(formula = employment_level ~ ., data = train, family = "binomial")
@@ -935,6 +936,7 @@ print(paste("Part Time Error Rate:", part_time_misclass))
 print(paste("prop of full time in test:", sum(test$employment_level == 0) / nrow(test)))
 ```
 
+#### Get Test Predictions and Confusion Matrix
 ```{r}
 test_pred <- predict(logreg, test[, -6], type = "response")
 test_pred <- ifelse(test_pred > .3, 1, 0)
@@ -948,6 +950,50 @@ print(paste("Full Time Error Rate:", full_time_misclass))
 part_time_misclass <- confmat[1, 2] / sum(confmat[, 2])
 print(paste("Part Time Error Rate:", part_time_misclass))
 # print(paste("prop of full time in test:",sum(test$employment_level=="(1) Full time")/nrow(test)))
+```
+
+#### # of Features in Mod
+```{r}
+length(logreg$coefficients)
+sum(logreg$beta[,1]!=0)
+```
+
+#### Significant Features and Their Effects
+```{r}
+pacman::p_load(jtools)
+
+# use this same code process below for the coeffiecients of the lasso model
+coef_p <- summ(logreg)$coeftable[,4]
+signif <- as.matrix(coef_p[coef_p<.1])
+coef_est <- summ(logreg)$coeftable[,1][coef_p<.1]
+
+coef_name <- names(coef_est)
+coef_est <- as.numeric(coef_est)
+p_vals <- as.numeric(coef_p[coef_p<.1])
+signif_coefs = data.frame(coef_name,coef_est,p_vals)
+signif_coefs <- na.omit(signif_coefs)
+signif_coefs
+
+# set signif_coefs index to coef_name
+rownames(signif_coefs) <- signif_coefs$coef_name
+#drop coef_name column
+#signif_coefs <- signif_coefs[,-1]
+
+signif_coefs$log_odds <- exp(signif_coefs$coef_est)
+```
+
+```{r}
+# arrange items in signif_coefs by p-value
+signif_coefs <- signif_coefs[order(signif_coefs$p_vals),]
+
+# all coef names starting with T are different activities
+# split signif_coefs into two dataframes, one for activities and one for everything else
+activities <- signif_coefs[grepl("^T", signif_coefs$coef_name),]
+#remove first 5 rows from activities
+activities <- activities[-c(1:5),]
+
+indiv_info <- signif_coefs[!grepl("^T", signif_coefs$coef_name),]
+
 ```
 
 ### Lasso Regression
@@ -979,19 +1025,7 @@ lasso <- glmnet(xtrain,ytrain,alpha=1,family = "binomial",lambda = cvlasso$lambd
 
 ```
 
-```{r}
-pacman::p_load(jtools)
-coef_p <- summ(logreg)$coeftable[,4]
-signif <- as.matrix(coef_p[coef_p<.1])
-coef_est <- summ(logreg)$coeftable[,1][coef_p<.1]
 
-coef_name <- names(coef_est)
-coef_est <- as.numeric(coef_est)
-p_vals <- as.numeric(coef_p[coef_p<.1])
-signif_coefs = data.frame(coef_name,coef_est,p_vals)
-signif_coefs <- na.omit(signif_coefs)
-signif_coefs
-```
 
 ```{r}
 plot(cvlasso)
@@ -999,6 +1033,15 @@ print(c(log(.01),log(.001)))
 plot(lasso)
 ```
 
+#### # of Features in Model
+```{r}
+# count the number of coefficients that are not 0 in the lasso model
+sum(lasso$beta[,1]!=0)
+```
+
+```{r}
+
+```
 
 #### Lasso Confusion Matrix
 ```{r}
@@ -1012,10 +1055,116 @@ table(lasso_pred,lasso_act)
 caret::confusionMatrix(as.factor(lasso_pred),as.factor(lasso_act))
 ```
 
+#### Plot Coefficent Estimates over Weight
 ```{r}
+plot(glmnet(xtrain, ytrain,alpha=1,family = "binomial"),xvar="lambda") +
+  abline(v=log(cvlasso$lambda.1se),col="green") +
+  abline(v=log(cvlasso$lambda.min),col="red")
+
+plot(glmnet(xtrain, ytrain,alpha=1,family = "binomial"),xvar="dev") +
+  abline(v=log(cvlasso$lambda.1se),col="green") +
+  abline(v=log(cvlasso$lambda.min),col="red")
 
 ```
 
+#### Significant Coeffeciens and Effects
+```{r}
+# get the coefficients from the lasso model
+lasso_coefs <- as.matrix(coef(lasso))
+
+# make dataframe with name of coefficients and their values
+lasso_coefs <- data.frame(coef_name = rownames(lasso_coefs), coef_est = lasso_coefs[,1])
+lasso_coefs <- lasso_coefs[lasso_coefs$coef_est!=0,]
+
+#lasso_coefs <- lasso_coefs %>% select(-coef_name)
+lasso_coefs
+```
+
+```{r}
+# add column to lasso_coefs with the log odds ratios, the column should be named log_odds and should be e to the power of the coef_est
+lasso_coefs$log_odds <- exp(lasso_coefs$coef_est)
+lasso_log_odds <- lasso_coefs %>% select(log_odds)
+```
+
+```{r}
+logreg_logodds<-signif_coefs %>% select(log_odds)
+logreg_logodds
+lasso_log_odds
+```
+
+#### ROC Curves/Visualizations
+```{r}
+# using ggplot2 plot the log odds ratios for each coefficient for both the lasso and logreg models ordered highest to lowest with the coefficient name on the y axis and the log odds on the x axis
+# use the par function to plot both plots side by side
+
+rownames(indiv_info)[2] ="type_of_housing(3) permanent,hotel/motel"
+rownames(lasso_coefs)[19] = "Doctoral Degree"
+rownames(lasso_coefs)[20] = "Masters Degree"
+rownames(lasso_coefs)[21] = "Bachelors Degree"
+
+# remove rows whose log odds are between .9 and 1.1
+lasso_coefs <- lasso_coefs[!(lasso_coefs$log_odds<1.1 & lasso_coefs$log_odds>.9),]
+
+# indiv info
+ggplot(data = indiv_info, mapping = aes(x=log_odds,y=coef_name)) +
+  geom_bar(stat = "identity") +
+  ggtitle("Log Odds for Significant Coefs Related to Indivuals Info")
+# activity time use
+ggplot(data = activities, mapping = aes(x=log_odds,y=coef_name)) +
+  geom_bar(stat = "identity") +
+  ggtitle("Log Odds for Significant Coefs Related to Indivuals Activity Times")
+#lasso
+ggplot(data = lasso_coefs, mapping = aes(x=log_odds,y=coef_name)) +
+  geom_bar(stat = "identity") +
+  ggtitle("Log Odds for Lasso Regression Coefficients")
+```
+
+```{r}
+```
+
+```{r}
+# plot the roc curve for the lasso model
+lasso_roc <- roc(ytest, lasso_pred)
+plot(lasso_roc)
+```
+
+```{r}
+threshold <- c(.1,.2,.3,.4,.5,.6,.7,.8,.9)
+# iterate through the threshold values and recalculate lasso_pred plotting the roc curve for each threshold
+for (i in threshold){
+  lasso_pred <- predict.glmnet(lasso, xtest, type = "response")
+  lasso_pred <- array(ifelse(lasso_pred>i,1,0))
+  lasso_roc <- roc(ytest, lasso_pred)
+  plot(lasso_roc)
+}
+```
+```{r}
+cfit <- cv.glmnet(xtrain, ytrain, family = "binomial", type.measure = "auc", 
+                  keep = TRUE)
+rocs <- roc.glmnet(cfit$fit.preval, newy = ytrain)
+
+best <- cfit$index["min",]
+plot(rocs[[best]], type = "l")
+invisible(sapply(rocs, lines, col="grey"))
+lines(rocs[[best]], lwd = 2,col = "red")
+```
+
+
+```{r}
+# use plotGLM to plot the logreg model
+modEvA::plotGLM(logreg)
+```
+
+```{r}
+modEvA::plotGLM(lasso)
+```
+
+
+```{r}
+# plot the logreg test data along with the logreg model line
+plot(predict(logreg,test,type = "response"), ytest)
+abline(logreg)
+```
 
 ## Random Forest
 ### Set up
