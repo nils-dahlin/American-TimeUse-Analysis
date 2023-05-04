@@ -942,6 +942,7 @@ test_pred <- predict(logreg, test[, -6], type = "response")
 test_pred <- ifelse(test_pred > .3, 1, 0)
 confmat <- table(test_pred, actual)
 confmat
+caret::confusionMatrix(as.factor(test_pred), as.factor(actual))
 log_acc <- sum(diag(confmat)) / sum(confmat)
 log_acc
 
